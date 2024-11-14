@@ -55,6 +55,7 @@ const styles = {
   },
   title: {
     fontSize: '1.8rem',
+    fontfamily: 'Rubik',
     margin: '0',  // Remove any default margin
     color: '#4CAF50',
   },
