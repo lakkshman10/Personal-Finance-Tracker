@@ -12,15 +12,18 @@ function NavBar() {
         
         {/* Navigation Links with a 30px gap */}
         <div style={styles.navLinks}>
-          <NavLink to="/about" style={styles.link} activeClassName="activeLink">
-            About
-          </NavLink>
-          <NavLink to="/features" style={styles.link} activeClassName="activeLink">
-            Features
-          </NavLink>
-          <NavLink to="/contact" style={styles.link} activeClassName="activeLink">
-            Contact
-          </NavLink>
+        <NavLink to="/about" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
+          About
+        </NavLink>
+        <NavLink to="/features" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
+          Features
+        </NavLink>
+        <NavLink to="/Financenews" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
+          Finance News
+        </NavLink>
+        <NavLink to="/contact" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
+          Contact
+        </NavLink>
         </div>
       </div>
 
@@ -39,7 +42,7 @@ const styles = {
     justifyContent: 'space-between',  // Spread out logo, navLinks, and authLinks
     alignItems: 'center',  // Align items vertically centered
     padding: '10px 20px',
-    backgroundColor: '#fff',
+    backgroundColor: '#1c2331',
     color: '#333',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
     zIndex: '100',  // Ensure navigation stays visible even when scrolling
@@ -64,7 +67,7 @@ const styles = {
     marginLeft: '30px',  // Adding a 30px gap between title and nav links
   },
   link: {
-    color: '#4CAF50',
+    color: 'White',
     textDecoration: 'none',
     fontSize: '1.2rem',
     padding: '5px 10px',
