@@ -8,22 +8,25 @@ function NavBar() {
       {/* Logo and Title Section */}
       <div style={styles.logoSection}>
         <img src={logo} alt="Logo" style={styles.logo} />
-        <h1 style={styles.title}>ExpenseMate</h1>
+        {/* Link around the title with textDecoration: 'none' to remove underline */}
+        <Link to="/home" style={styles.titleLink}>
+          <h1 style={styles.title}>ExpenseMate</h1>
+        </Link>
         
         {/* Navigation Links with a 30px gap */}
         <div style={styles.navLinks}>
-        <NavLink to="/about" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
-          About
-        </NavLink>
-        <NavLink to="/features" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
-          Features
-        </NavLink>
-        <NavLink to="/Financenews" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
-          Finance News
-        </NavLink>
-        <NavLink to="/contact" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
-          Contact
-        </NavLink>
+          <NavLink to="/about" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
+            About
+          </NavLink>
+          <NavLink to="/features" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
+            Features
+          </NavLink>
+          <NavLink to="/Financenews" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
+            Finance News
+          </NavLink>
+          <NavLink to="/contact" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
+            Contact
+          </NavLink>
         </div>
       </div>
 
@@ -56,9 +59,12 @@ const styles = {
     width: '40px',  // Adjust logo size
     height: '40px',
   },
+  titleLink: {
+    textDecoration: 'none',  // This removes the underline from the link itself
+  },
   title: {
     fontSize: '1.8rem',
-    fontfamily: 'Rubik',
+    fontFamily: 'Rubik',
     margin: '0',  // Remove any default margin
     color: '#4CAF50',
   },

@@ -1,6 +1,7 @@
-// src/pages/Home.js
 import React from 'react';
+import { FaRegCheckCircle, FaLock, FaDollarSign, FaRocket } from 'react-icons/fa';
 import heroImage from '../assets/hero-image.png';
+import featureImage from '../assets/featuresection.png'; // Feature image for Features Overview section
 
 function Home() {
   return (
@@ -20,25 +21,69 @@ function Home() {
         </div>
       </section>
 
-      {/* Additional Sections */}
+      {/* Why Choose ExpenseMate? */}
       <section style={styles.introSection}>
-        <h2>Why Choose ExpenseMate?</h2>
-        <p>
-          ExpenseMate is designed to make managing finances easy, with features that let you track expenses, visualize spending trends, 
-          and plan for your financial future.
-        </p>
+        <h2 style={styles.heading2}>Why Choose ExpenseMate?</h2>
+        <div style={styles.featuresGrid}>
+          <div style={styles.featureCard}>
+            <FaRegCheckCircle style={styles.icon} />
+            <h3 style={styles.featureTitle}>Simple and Easy to Use</h3>
+            <p style={styles.featureText}>
+              Our user-friendly interface makes managing your finances a breeze. ExpenseMate simplifies complex financial tasks with easy navigation and intuitive controls.
+            </p>
+          </div>
+          <div style={styles.featureCard}>
+            <FaLock style={styles.icon} />
+            <h3 style={styles.featureTitle}>Top-Notch Security</h3>
+            <p style={styles.featureText}>
+              Your data is safe with us. We use advanced encryption technologies to ensure your financial information is always protected.
+            </p>
+          </div>
+          <div style={styles.featureCard}>
+            <FaDollarSign style={styles.icon} />
+            <h3 style={styles.featureTitle}>Cost-Effective</h3>
+            <p style={styles.featureText}>
+              ExpenseMate is free to use, offering value-packed features without the need for paid plans. You get all the tools to manage your finances at no cost.
+            </p>
+          </div>
+          <div style={styles.featureCard}>
+            <FaRocket style={styles.icon} />
+            <h3 style={styles.featureTitle}>Innovative Features</h3>
+            <p style={styles.featureText}>
+              Take control with innovative features such as real-time updates, budget tracking, and in-depth spending analysis to help you make smarter financial decisions.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Features Section */}
       <section style={styles.featuresSection}>
-        <h2>Features Overview</h2>
-        <ul>
-          <li>📊 Easy Expense Tracking</li>
-          <li>📈 Detailed Reports and Analytics</li>
-          <li>🔒 Secure Login and Data Protection</li>
-          <li>📅 Budget Planning Tools</li>
-        </ul>
-      </section>
+  <h2 style={styles.heading2}>Features Overview</h2>
+  <div style={styles.featuresWrapper}>
+    {/* Left Column (Image) */}
+    <div style={styles.imageColumn}>
+      <img src={featureImage} alt="Features" style={styles.featureImage} />
+    </div>
+
+    {/* Right Column (Text) */}
+    <div style={styles.textColumn}>
+      <ul style={styles.featureList}>
+        <li style={styles.listheading}>📊 Easy Expense Tracking</li>
+        <p>Track every expense effortlessly with automatic categorization, keeping you organized without manual entry. Stay in control of your finances every day.</p>
+
+        <li style={styles.listheading}>📈 Detailed Reports and Analytics</li>
+        <p>Get comprehensive insights into your spending habits over time, helping you identify trends and make smarter financial decisions.</p>
+
+        <li style={styles.listheading}>🔒 Secure Login and Data Protection</li>
+        <p>Your financial data is safeguarded with top-tier encryption and secure login, ensuring peace of mind when managing your money.</p>
+
+        <li style={styles.listheading}>📅 Budget Planning Tools</li>
+        <p>Set budgets for different categories and track your progress to avoid overspending, ensuring you're always on top of your finances.</p>
+      </ul>
+    </div>
+  </div>
+</section>
+
     </div>
   );
 }
@@ -51,63 +96,134 @@ const styles = {
   },
   heroSection: {
     display: 'flex',
-    flexDirection: 'row',   // Align image and text side by side
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: '20px',
-    gap: '20px',            // Space between image and text
+    gap: '20px',
     padding: '20px',
-    flexWrap: 'wrap',       // Make sure it wraps on small screens
+    flexWrap: 'wrap',
   },
   imageContainer: {
-    flex: 1,               // Take up equal space as text container
-    maxWidth: '50%',       // Limit width of image container
+    flex: 1,
+    maxWidth: '50%',
   },
   heroImage: {
-    width: '100%',         // Make image fill container
-    height: 'auto',        // Maintain aspect ratio
-    objectFit: 'cover',    // Ensure the image scales correctly
+    width: '100%',
+    height: 'auto',
+    objectFit: 'cover',
     borderRadius: '8px',
   },
   textContainer: {
-    flex: 1,               // Take up equal space as image container
-    maxWidth: '50%',       // Limit width of text container
+    flex: 1,
+    maxWidth: '50%',
     padding: '20px',
-    textAlign: 'left',     // Align text to the left for readability
+    textAlign: 'left',
   },
   heading: {
-    fontSize: '3rem', // Bigger size for the heading
+    fontSize: '3rem',
     fontWeight: 'bold',
     color: '#4CAF50',
-    marginBottom: '20px', // Space below the heading
-    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.1)', // Slight shadow for a more dynamic look
+    marginBottom: '20px',
+    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.1)',
   },
   paragraph: {
-    fontSize: '1.3rem', // Make the text readable but not too large
+    fontSize: '1.3rem',
     color: '#666',
-    lineHeight: '1.8', // Makes it easier to read
-    maxWidth: '800px', // Limit the paragraph width to avoid it stretching too far
-    marginBottom: '30px', // Adds space below the paragraph
+    lineHeight: '1.8',
+    maxWidth: '800px',
+    marginBottom: '30px',
   },
   paragraph2: {
-    fontSize: '1rem', // Make the text readable but not too large
+    fontSize: '1rem',
     color: 'black',
-    lineHeight: '1.8', // Makes it easier to read
-    maxWidth: '800px', // Limit the paragraph width to avoid it stretching too far
-    marginBottom: '30px', // Adds space below the paragraph
+    lineHeight: '1.8',
+    maxWidth: '800px',
+    marginBottom: '30px',
   },
   introSection: {
     marginTop: '40px',
+    marginBottom: '40px',
     textAlign: 'center',
     padding: '10px',
     backgroundColor: '#F5F5F5',
     borderRadius: '8px',
   },
+  heading2: {
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: '20px',
+    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.1)',
+  },
+  featuresGrid: {
+    display: 'flex',               // Use flexbox to keep items in one line
+    justifyContent: 'space-between', // Distribute space between items
+    gap: '20px',                   // Add space between cards
+    flexWrap: 'wrap',              // Allow wrapping on small screens
+    marginTop: '40px',
+  },
+  featureCard: {
+    backgroundColor: '#fff',
+    padding: '20px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    textAlign: 'center',
+    flex: 1,                      // Allow cards to take equal space
+    minWidth: '220px',            // Ensure cards don't shrink too small
+  },
+  icon: {
+    fontSize: '3rem',
+    color: '#4CAF50',
+    marginBottom: '20px',
+  },
+  featureTitle: {
+    fontSize: '1.5rem',
+    color: '#333',
+    marginBottom: '15px',
+  },
+  featureText: {
+    fontSize: '1.1rem',
+    color: '#666',
+    lineHeight: '1.6',
+  },
   featuresSection: {
-    marginTop: '30px',
+    marginTop: '20px',
     padding: '10px',
     textAlign: 'center',
   },
+  featuresWrapper: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: '20px',
+    flexWrap: 'wrap',
+    marginTop: '40px',
+  },
+  imageColumn: {
+    flex: 1,
+    maxWidth: '50%',
+    marginBottom: '40px',
+  },
+  featureImage: {
+    width: '70%',
+    height: 'auto',             // Maintains aspect ratio
+    objectFit: 'contain',       // Shrinks the image to fit within its container
+    borderRadius: '8px',        // Optional, to give rounded corners to the image
+  },
+  textColumn: {
+    flex: 1,
+    maxWidth: '50%',
+    textAlign: 'left',
+  },
+  featureList: {
+    fontSize: '1.2rem',
+    color: '#333',
+    listStyleType: 'none',
+    paddingLeft: '0',
+  },
+  listheading:{
+    color: '#4CAF50',
+  }
 };
 
 export default Home;
