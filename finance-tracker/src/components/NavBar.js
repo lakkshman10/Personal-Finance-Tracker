@@ -15,18 +15,20 @@ function NavBar() {
         
         {/* Navigation Links with a 30px gap */}
         <div style={styles.navLinks}>
-          <NavLink to="/about" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
-            About
-          </NavLink>
-          <NavLink to="/features" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
-            Features
+
+         <NavLink to="/FinanceAssistant" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
+            Finance Assistant
           </NavLink>
           <NavLink to="/Financenews" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
             Finance News
           </NavLink>
-          <NavLink to="/contact" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
-            Contact
+          <NavLink to="/Community" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
+            Community
           </NavLink>
+          <NavLink to="/Contactus" style={styles.link} className={({ isActive }) => isActive ? 'activeLink' : ''}>
+            Contact Us
+          </NavLink>
+
         </div>
       </div>
 

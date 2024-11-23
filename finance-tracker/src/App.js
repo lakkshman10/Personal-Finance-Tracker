@@ -1,11 +1,16 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import Home from './pages/Home';
+import FinanceAssistant from './pages//FinanceAssistant';
+import News from './pages/News';
+import Community from './pages/Community';
+import ContactUs from './pages/ContactUs';
+
 import Footer from './components/Footer';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
-import News from './pages/News';
+
 
 function App() {
   return (
@@ -26,9 +31,12 @@ function MainContent() {
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: "1" }}>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<Home />} />
           <Route path="/Financenews" element={<News />} />
+          <Route path="/FinanceAssistant" element={<FinanceAssistant />} />
+          <Route path="/Community" element={<Community />} />
+          <Route path="/ContactUs" element={<ContactUs />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
         </Routes>
