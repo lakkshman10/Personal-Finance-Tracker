@@ -67,62 +67,96 @@ const styles = {
     fontFamily: '"Rubik", sans-serif',
     padding: "20px",
     color: "#333",
+    backgroundColor: "#f4f4f9", // Light background for the page
+    minHeight: "100vh",
   },
   header: {
     textAlign: "center",
     marginBottom: "40px",
+    padding: "20px 10px",
+    backgroundColor: "#4CAF50", // Green header background
+    color: "#fff",
+    borderRadius: "10px",
   },
   heading: { 
-    fontSize: "2.5rem",
-    color: "#4CAF50" 
-   },
+    fontSize: "3rem", 
+    fontWeight: "bold", 
+    margin: "10px 0",
+  },
   subheading: { 
-    fontSize: "1.2rem", 
-    color: "#555" 
-   },
+    fontSize: "1.3rem", 
+    color: "#e0ffe0", 
+    margin: "5px 0", 
+  },
   main: { 
-    display: "flex",
-    flexDirection: "column",
-    gap: "30px" 
-   },
-  section: { 
-    padding: "20px", 
-    backgroundColor: "#f9f9f9", 
-    borderRadius: "8px" 
-   },
+    display: "flex", 
+    flexDirection: "column", 
+    gap: "30px",
+  },
+  section: {
+    padding: "30px",
+    backgroundColor: "#fff",
+    borderRadius: "10px",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    transition: "transform 0.2s, box-shadow 0.2s",
+    cursor: "pointer",
+  },
   sectionHeading: { 
-    fontSize: "1.5rem", 
-    marginBottom: "10px"
+    fontSize: "1.8rem", 
+    marginBottom: "15px",
+    color: "#4CAF50",
+    borderBottom: "2px solid #ddd",
+    paddingBottom: "5px",
   },
   list: { 
     listStyle: "none", 
-    padding: 0 
+    padding: 0,
   },
   listItem: { 
     fontSize: "1rem",
-    marginBottom: "5px", 
-    cursor: "pointer" 
+    marginBottom: "10px",
+    color: "#555",
+    padding: "10px",
+    backgroundColor: "#f9f9f9",
+    borderRadius: "5px",
+    transition: "background-color 0.3s",
+  },
+  listItemHover: { 
+    backgroundColor: "#f0f0f0", 
+    color: "#4CAF50",
   },
   grid: { 
-    display: "flex", 
-    gap: "15px" 
+    display: "grid", 
+    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
+    gap: "20px",
   },
   card: {
-    flex: 1,
-    padding: "15px",
+    padding: "20px",
     backgroundColor: "#fff",
-    borderRadius: "8px",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+    borderRadius: "10px",
+    boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+    textAlign: "center",
+    transition: "transform 0.3s, box-shadow 0.3s",
+  },
+  cardHover: {
+    transform: "scale(1.05)",
+    boxShadow: "0 6px 12px rgba(0,0,0,0.2)",
   },
   footer: { 
     textAlign: "center", 
     marginTop: "40px", 
-    fontSize: "1rem"
+    padding: "20px",
+    fontSize: "1.1rem",
+    backgroundColor: "#4CAF50",
+    color: "#fff",
+    borderRadius: "10px",
   },
   link: { 
-    color: "#4CAF50", 
-    textDecoration: "none" 
- },
+    color: "#fff", 
+    textDecoration: "underline", 
+    fontWeight: "bold",
+  },
 };
+
 
 export default Community;
