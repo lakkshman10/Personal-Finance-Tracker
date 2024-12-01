@@ -23,8 +23,10 @@ const SignIn = () => {
       const response = await axios.post('http://localhost:5000/api/auth/signin', { email, password });
       console.log(response.data); // Log the response
       alert(response.data.message); // Success message
-      localStorage.setItem('token', response.data.token); // Store token
-      window.location.href = '/dashboard'; // Redirect
+      localStorage.setItem('token', response.data.token); // Store the token
+      localStorage.setItem('user', JSON.stringify(response.data.user)); // Optional: store user info
+
+      window.location.href = '/dashboard'; // Redirect to dashboard or another page
     } catch (error) {
       alert(error.response?.data?.message || 'Signin failed, please try again.');
     }
@@ -124,7 +126,7 @@ const styles = {
     border: '1px solid #ccc',
     borderRadius: '5px',
     fontSize: '1rem',
-    width: '100%', // Ensure equal width for all inputs
+    width: '100%',
   },
   button: {
     padding: '10px',

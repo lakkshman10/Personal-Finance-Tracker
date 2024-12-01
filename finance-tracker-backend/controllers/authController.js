@@ -34,9 +34,17 @@ const signin = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Skip password check for now, only check email
+    // Check if the password matches
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
-    return res.status(200).json({ message: 'Signin successful', user });
+    // Generate a JWT token
+    const token = jwt.sign({ userId: user._id, email: user.email }, 'your-secret-key', { expiresIn: '1h' });
+
+    // Respond with the token and user info
+    res.status(200).json({ message: 'Signin successful', token });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'An error occurred', error });
