@@ -1,0 +1,13 @@
+body {
+    margin: 0;
+    font-family: "Rubik", sans-serif;
+  }
+  
+  h1 {
+    color: #333;
+  }
+  
+  a:hover {
+    background: #357a38;
+  }
+  
