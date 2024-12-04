@@ -1,58 +1,78 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import NavBar from './components/NavBar';
+import Sidebar from './components/Sidebar';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import FinanceAssistant from './pages/FinanceAssistant';
 import News from './pages/News';
 import Community from './pages/Community';
 import ContactUs from './pages/ContactUs';
-import Footer from './components/Footer';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
-import Dashboard from './pages/Dashboard';  // New Page for Dashboard
-import ExpenseTracker from './pages/ExpenseTracker';  // New Page for Expense Tracker
-import Budgeting from './pages/Budgeting';  // New Page for Budgeting
-import SavingsGoals from './pages/SavingsGoals';  // New Page for Savings Goals
-import IncomeTracking from './pages/IncomeTracking';  // New Page for Income Tracking
-import ReportsInsights from './pages/ReportsInsights';  // New Page for Reports & Insights
+import Dashboard from './pages/Dashboard';
+import ExpenseTracker from './pages/ExpenseTracker';
+import Budgeting from './pages/Budgeting';
+import SavingsGoals from './pages/SavingsGoals';
+import IncomeTracking from './pages/IncomeTracking';
+import ReportsInsights from './pages/ReportsInsights';
 
 function App() {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
+
   return (
     <Router>
-      <NavBar />
-      <MainContent />
+      <MainContent isSidebarCollapsed={isSidebarCollapsed} toggleSidebar={toggleSidebar} />
     </Router>
   );
 }
 
-function MainContent() {
+function MainContent({ isSidebarCollapsed, toggleSidebar }) {
   const location = useLocation();
 
-  // Define paths where the footer should appear
-  const showFooter = ["/Financenews", "/home"].includes(location.pathname);
+  const routesWithSidebar = [
+    '/dashboard',
+    '/expense-tracker',
+    '/budgeting',
+    '/savings-goals',
+    '/income-tracking',
+    '/reports-insights',
+  ];
+
+  const showSidebar = routesWithSidebar.includes(location.pathname);
+  const showFooter = ['/Financenews', '/home'].includes(location.pathname);
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <div style={{ flex: "1" }}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/Financenews" element={<News />} />
-          <Route path="/FinanceAssistant" element={<FinanceAssistant />} />
-          <Route path="/Community" element={<Community />} />
-          <Route path="/ContactUs" element={<ContactUs />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          {/* Add new routes for the dashboard features */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/expense-tracker" element={<ExpenseTracker />} />
-          <Route path="/budgeting" element={<Budgeting />} />
-          <Route path="/savings-goals" element={<SavingsGoals />} />
-          <Route path="/income-tracking" element={<IncomeTracking />} />
-          <Route path="/reports-insights" element={<ReportsInsights />} />
-        </Routes>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <NavBar />
+      <div style={{ display: 'flex', minHeight: '100vh' }}>
+        {showSidebar && (
+          <Sidebar
+            isCollapsed={isSidebarCollapsed}
+            toggleSidebar={toggleSidebar}
+          />
+        )}
+        <div style={{ flex: 1, marginLeft: showSidebar ? (isSidebarCollapsed ? '70px' : '0px') : '0', transition: 'margin-left 0.3s ease' }}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/Financenews" element={<News />} />
+            <Route path="/FinanceAssistant" element={<FinanceAssistant />} />
+            <Route path="/Community" element={<Community />} />
+            <Route path="/ContactUs" element={<ContactUs />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/expense-tracker" element={<ExpenseTracker />} />
+            <Route path="/budgeting" element={<Budgeting />} />
+            <Route path="/savings-goals" element={<SavingsGoals />} />
+            <Route path="/income-tracking" element={<IncomeTracking />} />
+            <Route path="/reports-insights" element={<ReportsInsights />} />
+          </Routes>
+        </div>
       </div>
-      {/* Conditionally render the footer */}
       {showFooter && <Footer />}
     </div>
   );

@@ -56,16 +56,20 @@ function NavBar() {
             <div style={styles.accountIcon} onClick={toggleDropdown}>
               <span style={styles.accountText}>A</span>
             </div>
-            {isDropdownOpen && (
-              <div style={styles.dropdownMenu}>
-                <Link to="/account" style={styles.dropdownItem}>
-                  Account
-                </Link>
-                <button style={styles.dropdownItem} onClick={handleLogout}>
-                  Logout
-                </button>
-              </div>
-            )}
+            <div
+              style={{
+                ...styles.dropdownMenu,
+                transform: isDropdownOpen ? 'scale(1)' : 'scale(0)',
+                visibility: isDropdownOpen ? 'visible' : 'hidden',
+              }}
+            >
+              <Link to="/account" style={styles.dropdownItem}>
+                Account
+              </Link>
+              <button style={styles.dropdownItem} onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
           </div>
         ) : (
           <>
@@ -152,6 +156,7 @@ const styles = {
     fontSize: '1.2rem',
   },
   dropdownMenu: {
+    fontFamily:'Rubik',
     position: 'absolute',
     top: '40px',
     right: '0',
@@ -161,26 +166,26 @@ const styles = {
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
     padding: '10px',
     zIndex: '10',
+    visibility: 'hidden', // Default state for dropdown
+    transform: 'scale(0)', // Default state for dropdown
+    transition: 'transform 0.2s ease, visibility 0.2s ease',
   },
   dropdownItem: {
-    fontFamily:'Rubik',
     display: 'block',
-    width: '100%', // Make it fit dropdown width
-    textAlign: 'left',
     padding: '10px 15px',
     fontSize: '1rem',
-    color: '#333', // Neutral text color
-    backgroundColor: 'transparent', // Transparent background for uniformity
-    border: 'none', // Remove button border
-    textDecoration: 'none', // Remove link underline
-    cursor: 'pointer', // Pointer for button consistency
+    color: '#333',
+    backgroundColor: 'transparent',
+    border: 'none',
+    textDecoration: 'none',
+    cursor: 'pointer',
     transition: 'background-color 0.3s ease',
-    outline: 'none', // Remove focus outline
     ':hover': {
       backgroundColor: '#f0f0f0', // Subtle background on hover
       color: '#000',
     },
-  },
+    },
+
 };
 
 export default NavBar;
