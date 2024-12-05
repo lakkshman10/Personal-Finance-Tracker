@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
+import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import FinanceAssistant from './pages/FinanceAssistant';
 import News from './pages/News';
@@ -45,7 +46,7 @@ function MainContent({ isSidebarCollapsed, toggleSidebar }) {
   const showFooter = ['/Financenews', '/home'].includes(location.pathname);
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+<div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <NavBar />
       <div style={{ display: 'flex', minHeight: '100vh' }}>
         {showSidebar && (
@@ -54,9 +55,9 @@ function MainContent({ isSidebarCollapsed, toggleSidebar }) {
             toggleSidebar={toggleSidebar}
           />
         )}
-        <div style={{ flex: 1, marginLeft: showSidebar ? (isSidebarCollapsed ? '70px' : '0px') : '0', transition: 'margin-left 0.3s ease' }}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/home" replace />} />
+        <div style={{ flex: 1, marginLeft: showSidebar ? (isSidebarCollapsed ? '70px' : '0') : '0', transition: 'margin-left 0.3s ease' }}>
+           <Routes>
+            {/* Non-protected routes */}
             <Route path="/home" element={<Home />} />
             <Route path="/Financenews" element={<News />} />
             <Route path="/FinanceAssistant" element={<FinanceAssistant />} />
@@ -64,12 +65,32 @@ function MainContent({ isSidebarCollapsed, toggleSidebar }) {
             <Route path="/ContactUs" element={<ContactUs />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/expense-tracker" element={<ExpenseTracker />} />
-            <Route path="/budgeting" element={<Budgeting />} />
-            <Route path="/savings-goals" element={<SavingsGoals />} />
-            <Route path="/income-tracking" element={<IncomeTracking />} />
-            <Route path="/reports-insights" element={<ReportsInsights />} />
+
+            {/* Protected Routes */}
+            <Route
+              path="/dashboard"
+              element={<ProtectedRoute element={Dashboard} />}
+            />
+            <Route
+              path="/expense-tracker"
+              element={<ProtectedRoute element={ExpenseTracker} />}
+            />
+            <Route
+              path="/budgeting"
+              element={<ProtectedRoute element={Budgeting} />}
+            />
+            <Route
+              path="/savings-goals"
+              element={<ProtectedRoute element={SavingsGoals} />}
+            />
+            <Route
+              path="/income-tracking"
+              element={<ProtectedRoute element={IncomeTracking} />}
+            />
+            <Route
+              path="/reports-insights"
+              element={<ProtectedRoute element={ReportsInsights} />}
+            />
           </Routes>
         </div>
       </div>

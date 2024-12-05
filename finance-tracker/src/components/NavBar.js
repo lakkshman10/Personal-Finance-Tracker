@@ -46,6 +46,11 @@ function NavBar() {
           <NavLink to="/Contactus" style={styles.link}>
             Contact Us
           </NavLink>
+          {isAuthenticated && (
+            <NavLink to="/dashboard" style={styles.link}>
+              Dashboard
+            </NavLink>
+          )}
         </div>
       </div>
 

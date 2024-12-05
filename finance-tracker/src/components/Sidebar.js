@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link,useLocation } from 'react-router-dom';
 import {
   FaChartBar,
   FaWallet,
@@ -13,6 +13,7 @@ import {
 
 function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const location = useLocation();
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
@@ -28,7 +29,7 @@ function Sidebar() {
 
   const styles = {
     sidebar: {
-      width: isCollapsed ? '45px' : '220px',
+      width: isCollapsed ? '45px' : '200px',
       height: 'auto',
       backgroundColor: '#1c2331',
       color: 'white',
@@ -47,18 +48,19 @@ function Sidebar() {
       marginBottom: '20px',
       alignSelf: isCollapsed ? 'center' : 'flex-start',
     },
-    link: {
+    link: (isActive) => ({
       display: 'flex',
       alignItems: 'center',
       textDecoration: 'none',
-      color: 'white',
+      color: isActive ? '#00C49F' : 'white',
       padding: '10px',
       marginBottom: '10px',
       borderRadius: '5px',
       transition: 'background-color 0.3s ease',
-    },
+      backgroundColor: isActive ? '#273142' : 'transparent',
+    }),
     linkContainer: {
-      display: 'flex',
+      display: 'block',
       alignItems: 'center',
       justifyContent: isCollapsed ? 'center' : 'flex-start',
       width: '100%',
@@ -78,14 +80,15 @@ function Sidebar() {
       <button style={styles.toggleButton} onClick={toggleSidebar}>
         <FaBars />
       </button>
-      {features.map((feature) => (
-        <Link to={feature.path} style={styles.link} key={feature.name}>
-          <div style={styles.linkContainer}>
+      {features.map((feature) => {
+        const isActive = location.pathname === feature.path;
+        return (
+          <Link to={feature.path} style={styles.link(isActive)} key={feature.name}>
             <span style={styles.icon}>{feature.icon}</span>
             <span style={styles.text}>{feature.name}</span>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
     </div>
   );
 }
