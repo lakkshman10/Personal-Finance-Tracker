@@ -1,29 +1,31 @@
-// server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const authRoutes = require('./routes/auth'); // Make sure this path is correct
-require('dotenv').config(); // Load .env file
+const authRoutes = require('./routes/auth');
+const cookieParser = require('cookie-parser');
+require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+const corsOptions = {
+  origin: 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 
-// Routes
-app.use('/api/auth', authRoutes); // Ensure this line is in place
+app.use('/api/auth', authRoutes);
 
-// Connect to MongoDB
 const MONGO_URI = process.env.MONGODB_URL;
-if (!MONGO_URI) {
-  console.error('Error: MONGODB_URL is not defined in the environment variables');
-  process.exit(1); // Exit the app
-}
 
-mongoose.connect(MONGO_URI)
+mongoose
+  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log('MongoDB connection error: ', err));
+  .catch((err) => console.log('MongoDB connection error: ', err));
 
-// Start the server
-app.listen(5000, () => console.log('Server is running on port 5000'));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

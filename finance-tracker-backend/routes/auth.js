@@ -1,11 +1,13 @@
 const express = require('express');
-const { signup, signin } = require('../controllers/authController'); // Import signin
+const { signup, signin, check, refreshToken } = require('../controllers/authController');
+const authenticateToken = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
-// Signup route
 router.post('/signup', signup);
-// Signin route
 router.post('/signin', signin);
+router.get('/check', authenticateToken, check);
+router.post('/refresh-token', refreshToken);
 
 module.exports = router;
+

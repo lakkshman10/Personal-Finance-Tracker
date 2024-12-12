@@ -1,21 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import logo from '../assets/logo.png'; // Ensure this path is correct
+import { useSelector, useDispatch } from 'react-redux';
+import { logoutUser } from '../redux/actions';
+import logo from '../assets/logo.png';
 
-function NavBar() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Dropdown menu state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const dispatch = useDispatch();
+  const token = useSelector((state) => state.auth?.token);
 
   useEffect(() => {
-    const token = localStorage.getItem('token'); // Check for token
-    setIsAuthenticated(!!token);
-  }, []);
+    setIsAuthenticated(!!token); // Sync Redux token state with local isAuthenticated
+  }, [token]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user'); // Clear stored user data
-    setIsAuthenticated(false);
-    setIsDropdownOpen(false); // Close the dropdown
+    dispatch(logoutUser()); // Clear Redux state
+    localStorage.removeItem('token'); // Clear localStorage
+    localStorage.removeItem('user');
+    setIsAuthenticated(false); // Update state
+    setIsDropdownOpen(false); // Close dropdown
     window.location.href = '/signin'; // Redirect to sign-in
   };
 
@@ -78,14 +82,18 @@ function NavBar() {
           </div>
         ) : (
           <>
-            <Link to="/signin" style={styles.authLink}>Sign In</Link>
-            <Link to="/signup" style={styles.authLink}>Sign Up</Link>
+            <Link to="/signin" style={styles.authLink}>
+              Sign In
+            </Link>
+            <Link to="/signup" style={styles.authLink}>
+              Sign Up
+            </Link>
           </>
         )}
       </div>
     </nav>
   );
-}
+};
 
 const styles = {
   nav: {
@@ -121,7 +129,7 @@ const styles = {
     marginLeft: '30px',
   },
   link: {
-    color: 'White',
+    color: 'white',
     textDecoration: 'none',
     fontSize: '1.2rem',
     padding: '5px 10px',
@@ -161,7 +169,7 @@ const styles = {
     fontSize: '1.2rem',
   },
   dropdownMenu: {
-    fontFamily:'Rubik',
+    fontFamily: 'Rubik',
     position: 'absolute',
     top: '40px',
     right: '0',
@@ -171,8 +179,8 @@ const styles = {
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
     padding: '10px',
     zIndex: '10',
-    visibility: 'hidden', // Default state for dropdown
-    transform: 'scale(0)', // Default state for dropdown
+    visibility: 'hidden',
+    transform: 'scale(0)',
     transition: 'transform 0.2s ease, visibility 0.2s ease',
   },
   dropdownItem: {
@@ -186,11 +194,10 @@ const styles = {
     cursor: 'pointer',
     transition: 'background-color 0.3s ease',
     ':hover': {
-      backgroundColor: '#f0f0f0', // Subtle background on hover
+      backgroundColor: '#f0f0f0',
       color: '#000',
     },
-    },
-
+  },
 };
 
-export default NavBar;
+export default Navbar;

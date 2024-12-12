@@ -1,34 +1,53 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { setToken, setUser } from '../redux/actions';
 import SignInImage from '../assets/Signin-image.png';
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); // Handles API or validation errors
-  const [success, setSuccess] = useState(''); // Handles success messages
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const validateForm = async (e) => {
     e.preventDefault();
-    setError(''); // Reset error
-    setSuccess(''); // Reset success
+    setError('');
+    setLoading(true);
 
-    // Basic validation
     if (!email || !password) {
       setError('Please fill in all fields.');
+      setLoading(false);
       return;
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/signin', { email, password });
-      console.log(response.data); // Log the response
-      alert(response.data.message); // Success message
-      localStorage.setItem('token', response.data.token); // Store the token
-      localStorage.setItem('user', JSON.stringify(response.data.user)); // Optional: store user info
+      const response = await axios.post(
+        'http://localhost:5000/api/auth/signin',
+        { email, password },
+        { withCredentials: true }
+      );
 
-      window.location.href = '/dashboard'; // Redirect to dashboard or another page
-    } catch (error) {
-      alert(error.response?.data?.message || 'Signin failed, please try again.');
+      const { accessToken, user } = response.data;
+
+      // Dispatch token and user to Redux
+      dispatch(setToken(accessToken));
+      dispatch(setUser(user));
+
+      // Sync with localStorage (optional)
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      // Navigate to dashboard
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Signin failed, please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,7 +58,6 @@ const SignIn = () => {
           <h2 style={styles.title}>Welcome Back to ExpenseMate!</h2>
           <p style={styles.subtitle}>Sign in to continue managing your finances.</p>
           <form style={styles.form} onSubmit={validateForm}>
-            {success && <p style={{ ...styles.alert, ...styles.success }}>{success}</p>}
             {error && <p style={{ ...styles.alert, ...styles.error }}>{error}</p>}
             <input
               type="email"
@@ -57,8 +75,8 @@ const SignIn = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <button type="submit" style={styles.button}>
-              Sign In
+            <button type="submit" style={styles.button} disabled={loading}>
+              {loading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
           <p style={styles.existingAccount}>
@@ -167,11 +185,6 @@ const styles = {
     borderRadius: '5px',
     width: '100%',
     textAlign: 'center',
-  },
-  success: {
-    color: '#155724',
-    backgroundColor: '#d4edda',
-    border: '1px solid #c3e6cb',
   },
   error: {
     color: '#721c24',

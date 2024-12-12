@@ -55,9 +55,12 @@ function Sidebar() {
       color: isActive ? '#00C49F' : 'white',
       padding: '10px',
       marginBottom: '10px',
-      borderRadius: '5px',
+      borderRadius: '5px', 
       transition: 'background-color 0.3s ease',
       backgroundColor: isActive ? '#273142' : 'transparent',
+      width: 'calc(100% - 5px)', // Adjust width considering padding
+      boxSizing: 'border-box', // Ensures no overflow
+
     }),
     linkContainer: {
       display: 'block',

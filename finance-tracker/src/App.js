@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation,Navigate } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
@@ -58,6 +58,8 @@ function MainContent({ isSidebarCollapsed, toggleSidebar }) {
         <div style={{ flex: 1, marginLeft: showSidebar ? (isSidebarCollapsed ? '70px' : '0') : '0', transition: 'margin-left 0.3s ease' }}>
            <Routes>
             {/* Non-protected routes */}
+            <Route path="/" element={<Navigate to="/home" />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/home" element={<Home />} />
             <Route path="/Financenews" element={<News />} />
             <Route path="/FinanceAssistant" element={<FinanceAssistant />} />
