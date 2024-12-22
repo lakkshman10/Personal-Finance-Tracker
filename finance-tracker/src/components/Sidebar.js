@@ -38,6 +38,7 @@ function Sidebar() {
       padding: '10px',
       transition: 'width 0.3s ease',
       alignItems: 'flex-start',
+      fontFamily: 'Rubik',
     },
     toggleButton: {
       backgroundColor: 'transparent',

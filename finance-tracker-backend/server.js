@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
+const expensesRoutes = require('./routes/expenseAuth');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
@@ -19,11 +20,12 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/expenses', expensesRoutes);
 
 const MONGO_URI = process.env.MONGODB_URL;
 
 mongoose
-  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log('MongoDB connection error: ', err));
 

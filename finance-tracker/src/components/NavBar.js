@@ -105,6 +105,7 @@ const styles = {
     color: '#333',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
     zIndex: '100',
+    fontFamily: 'Rubik',
   },
   logoSection: {
     display: 'flex',
@@ -120,7 +121,6 @@ const styles = {
   },
   title: {
     fontSize: '1.8rem',
-    fontFamily: 'Rubik',
     margin: '0',
     color: '#4CAF50',
   },

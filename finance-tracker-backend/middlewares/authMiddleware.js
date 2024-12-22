@@ -11,7 +11,7 @@ const authenticateToken = (req, res, next) => {
     if (err) {
       return res.status(403).json({ message: 'Forbidden: Invalid or expired token.' });
     }
-    req.user = decoded; // Attach decoded token data to the request object
+    req.user = { id: decoded.userId };
     next();
   });
 };

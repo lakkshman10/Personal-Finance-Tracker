@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { setToken, setUser } from './redux/actions';
 import { BrowserRouter as Router, Route, Routes, useLocation,Navigate } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import Sidebar from './components/Sidebar';
@@ -22,6 +24,17 @@ function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    if (token && user) {
+      // If token and user exist in localStorage, set them in Redux store
+      dispatch(setToken(token));
+      dispatch(setUser(user));
+    }
+  }, [dispatch]);
 
   return (
     <Router>

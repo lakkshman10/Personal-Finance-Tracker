@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSelector } from 'react-redux'; // Import to access Redux store
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'; // For pie chart
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend} from 'recharts'; // For line chart
 import { ProgressBar } from 'react-bootstrap'; // For progress bar (You can use react-circular-progressbar too)
@@ -10,6 +11,7 @@ const expenseData = [
   { name: 'Entertainment', value: 300 },
   { name: 'Travel', value: 200 },
   { name: 'Bills', value: 100 },
+  { name: 'Others', value: 100 },
 ];
 
 const savingsProgress = 70; // 70% towards savings goal
@@ -34,11 +36,12 @@ const alerts = [
 ];
 
 function Dashboard() {
+  const { user } = useSelector((state) => state.auth);
   return (
     <div style={styles.dashboard}>
       {/* Top Section */}
       <div style={styles.topSection}>
-        <h2>Good Morning, John!</h2>
+      <h2>Welcome, {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'User'}!</h2>
         <div style={styles.financialHealthSummary}>
           <div style={styles.statCard}>You've saved $500 this month!</div>
         </div>
@@ -102,6 +105,7 @@ const styles = {
   dashboard: {
     padding: '20px',
     backgroundColor: '#f4f4f4',
+    fontFamily:'Rubik',
   },
   topSection: {
     marginBottom: '30px',

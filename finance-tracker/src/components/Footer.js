@@ -4,7 +4,7 @@ import { FaFacebookF, FaTwitter, FaGoogle, FaInstagram, FaYoutube,} from 'react-
 function Footer() {
   const styles = {
     footerWrapper: {
-      width: '100%', // Ensure the footer takes up the full width
+      width: '100%', 
       backgroundColor: '#1c2331',
       color: 'white',
       fontFamily: 'Arial, sans-serif',
@@ -33,15 +33,15 @@ function Footer() {
     footerLinks: {
       display: 'flex',
       justifyContent: 'space-between',
-      alignItems: 'flex-start', // Align to top for better spacing
-      padding: '20px 40px', // Added padding for a clean look
-      flexWrap: 'wrap', // Allows wrapping on smaller screens
-      gap: '20px', // Spacing between sections
+      alignItems: 'flex-start', 
+      padding: '20px 40px', 
+      flexWrap: 'wrap', 
+      gap: '20px', 
     },
     footerColumn: {
       flex: '1',
-      minWidth: '180px', // Ensures columns have a consistent width
-      margin: '0 10px', // Reduced margins for compactness
+      minWidth: '180px', 
+      margin: '0 10px', 
     },
     footerColumnH2: {
       fontWeight: 'bold',
@@ -52,7 +52,7 @@ function Footer() {
       textDecoration: 'none',
     },
     footerLinkHover: {
-      color: '#7c4dff', // Color when hovered
+      color: '#7c4dff', 
     },
     footerCopyright: {
       textAlign: 'center',
