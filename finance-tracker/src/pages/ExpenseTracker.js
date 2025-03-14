@@ -203,7 +203,7 @@ function ExpenseTracker() {
       },
     ],
     title: {
-      text: "Expense Breakdown",
+      text: "Monthly Expense Breakdown",
     },
   };
   
@@ -218,7 +218,7 @@ function ExpenseTracker() {
       },
     ],
     title: {
-      text: "Monthly Expense Trend",
+      text: "Expense Trend",
     },
     axes: [
       {

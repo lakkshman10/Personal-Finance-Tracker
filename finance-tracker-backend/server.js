@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const expensesRoutes = require('./routes/expenseAuth');
+const budgetRoutes = require('./routes/budgetAuth');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
@@ -21,6 +22,7 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expensesRoutes);
+app.use('/api/budgets', budgetRoutes);
 
 const MONGO_URI = process.env.MONGODB_URL;
 
