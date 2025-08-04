@@ -46,30 +46,39 @@ function TaxCalculator() {
   const [tax, setTax] = useState(0);
 
   const calculateTax = () => {
+    // Updated Indian tax slabs for FY 2024-25
     const slabs = regime === "new"
       ? [
-          { limit: 300000, rate: 0 },
-          { limit: 600000, rate: 0.05 },
-          { limit: 900000, rate: 0.1 },
-          { limit: 1200000, rate: 0.15 },
-          { limit: 1500000, rate: 0.2 },
-          { limit: Infinity, rate: 0.3 },
+          { min: 0, max: 300000, rate: 0 },
+          { min: 300000, max: 700000, rate: 0.05 },
+          { min: 700000, max: 1000000, rate: 0.1 },
+          { min: 1000000, max: 1200000, rate: 0.15 },
+          { min: 1200000, max: 1500000, rate: 0.2 },
+          { min: 1500000, max: Infinity, rate: 0.3 },
         ]
       : [
-          { limit: 250000, rate: 0 },
-          { limit: 500000, rate: 0.05 },
-          { limit: 1000000, rate: 0.2 },
-          { limit: Infinity, rate: 0.3 },
+          { min: 0, max: 250000, rate: 0 },
+          { min: 250000, max: 500000, rate: 0.05 },
+          { min: 500000, max: 1000000, rate: 0.2 },
+          { min: 1000000, max: Infinity, rate: 0.3 },
         ];
 
     let taxableIncome = regime === "old" ? income - deductions : income;
     let calculatedTax = 0;
 
-    for (const { limit, rate } of slabs) {
-      const taxable = Math.min(taxableIncome, limit);
-      calculatedTax += taxable * rate;
-      taxableIncome -= taxable;
-      if (taxableIncome <= 0) break;
+    // Correct slab-wise calculation
+    for (const slab of slabs) {
+      if (taxableIncome > slab.min) {
+        const taxableForThisSlab = Math.min(taxableIncome, slab.max) - slab.min;
+        calculatedTax += taxableForThisSlab * slab.rate;
+      }
+    }
+
+    // Add standard deduction for new regime (₹50,000)
+    if (regime === "new" && calculatedTax > 0) {
+      const standardDeduction = 50000;
+      const taxOnStandardDeduction = standardDeduction * 0.05; // Assuming lowest applicable rate
+      calculatedTax = Math.max(0, calculatedTax - taxOnStandardDeduction);
     }
 
     setTax(calculatedTax);
@@ -177,55 +186,88 @@ function InvestmentCalculator() {
   const [principal, setPrincipal] = useState("");
   const [rate, setRate] = useState("");
   const [time, setTime] = useState("");
+  const [compoundFrequency, setCompoundFrequency] = useState("12"); // Monthly by default
   const [futureValue, setFutureValue] = useState(0);
+  const [totalInterest, setTotalInterest] = useState(0);
 
   const calculateFutureValue = () => {
-    const compoundFrequency = 1; // Annually
-    const calculatedFV =
-      principal * Math.pow(1 + rate / (compoundFrequency * 100), time);
+    const r = rate / 100; // Convert percentage to decimal
+    const n = parseInt(compoundFrequency); // Compounding frequency per year
+    const t = time; // Time in years
+    
+    // Compound Interest Formula: A = P(1 + r/n)^(nt)
+    const calculatedFV = principal * Math.pow(1 + r / n, n * t);
+    const interest = calculatedFV - principal;
+    
     setFutureValue(calculatedFV);
+    setTotalInterest(interest);
   };
 
   return (
     <div style={styles.calculator}>
       <h2 style={styles.subheading}>Investment Calculator</h2>
       <div style={styles.formGroup}>
-        <label style={styles.label}>Principal Amount:</label>
+        <label style={styles.label}>Principal Amount (₹):</label>
         <input
           type="number"
           value={principal}
           onChange={(e) => setPrincipal(Number(e.target.value))}
           onFocus={(e) => e.target.value === "0" && setPrincipal("")}
           style={styles.input}
+          placeholder="Enter initial investment"
         />
       </div>
       <div style={styles.formGroup}>
-        <label style={styles.label}>Interest Rate (%):</label>
+        <label style={styles.label}>Annual Interest Rate (%):</label>
         <input
           type="number"
+          step="0.1"
           value={rate}
           onChange={(e) => setRate(Number(e.target.value))}
           onFocus={(e) => e.target.value === "0" && setRate("")}
           style={styles.input}
+          placeholder="e.g., 8.5"
         />
       </div>
       <div style={styles.formGroup}>
-        <label style={styles.label}>Time (Years):</label>
+        <label style={styles.label}>Investment Period (Years):</label>
         <input
           type="number"
           value={time}
           onChange={(e) => setTime(Number(e.target.value))}
           onFocus={(e) => e.target.value === "0" && setTime("")}
           style={styles.input}
+          placeholder="Enter time period"
         />
+      </div>
+      <div style={styles.formGroup}>
+        <label style={styles.label}>Compounding Frequency:</label>
+        <select
+          value={compoundFrequency}
+          onChange={(e) => setCompoundFrequency(e.target.value)}
+          style={styles.input}
+        >
+          <option value="1">Annually</option>
+          <option value="4">Quarterly</option>
+          <option value="12">Monthly</option>
+          <option value="365">Daily</option>
+        </select>
       </div>
       <button onClick={calculateFutureValue} style={styles.button}>
         Calculate Future Value
       </button>
 
-      <p style={styles.result}>
-        Future Value: ₹{futureValue.toFixed(2)}
-      </p>
+      <div style={styles.resultSection}>
+        <p style={styles.result}>
+          <strong>Future Value: ₹{futureValue.toLocaleString('en-IN', {maximumFractionDigits: 2})}</strong>
+        </p>
+        <p style={styles.result}>
+          Total Interest Earned: ₹{totalInterest.toLocaleString('en-IN', {maximumFractionDigits: 2})}
+        </p>
+        <p style={styles.result}>
+          Investment Growth: {((futureValue / principal - 1) * 100).toFixed(2)}%
+        </p>
+      </div>
     </div>
   );
 }
@@ -309,6 +351,13 @@ const styles = {
     marginTop: "15px",
     fontSize: "1.2rem",
     color: "#333",
+  },
+  resultSection: {
+    marginTop: "20px",
+    padding: "15px",
+    backgroundColor: "#e8f5e8",
+    borderRadius: "8px",
+    borderLeft: "4px solid #4CAF50",
   },
 };
 
