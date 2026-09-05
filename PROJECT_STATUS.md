@@ -382,6 +382,21 @@ Only after this milestone should we move aggressively into Income, Savings Goals
 
 # 13. Change Log
 
+## 2026-09-04
+
+* Full repository audit conducted.
+* Empty placeholder pages created for `IncomeTracking`, `SavingsGoals`, and `ReportsInsights` to resolve runtime crashes.
+* FeatureCard component stub added to eliminate empty file anomaly.
+* Nonexistent `/debt-management` link removed from sidebar navigation.
+* Duplicate `/home` route removed and `/Contactus` route casing aligned in `App.js`.
+* Misleading "Reset All Expenses" button replaced with a clean "Cancel Edit" workflow.
+* Input validation & field whitelisting added to `updateExpense` and `updatedBudget` controllers to block unauthorized field injection.
+* Resilient `syncMonthlySummary` reconciliation added to ensure `totalExpenses` and category breakdowns are non-negative.
+* Centralized API service created at `finance-tracker/src/services/api.js` with auto-JWT attachment and unified error handling; all hardcoded `localhost:5000` URLs eliminated.
+* Unused dependencies pruned (`chart.js`, `dexie`, `bcryptjs`).
+* Database connection modernized and consolidated via `config/db.js` and `server.js`.
+* Environment variable templates (`.env.example`) added for frontend and backend.
+
 ## 2026-08-27
 
 * Repository reviewed.

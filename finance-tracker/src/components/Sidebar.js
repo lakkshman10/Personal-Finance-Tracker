@@ -6,7 +6,6 @@ import {
   FaPiggyBank,
   FaFileInvoiceDollar,
   FaChartPie,
-  FaMoneyBillWave,
   FaTachometerAlt,
   FaBars,
 } from 'react-icons/fa';
@@ -24,7 +23,6 @@ function Sidebar() {
     { name: 'Savings Goals', path: '/savings-goals', icon: <FaPiggyBank /> },
     { name: 'Income Tracking', path: '/income-tracking', icon: <FaFileInvoiceDollar /> },
     { name: 'Reports & Insights', path: '/reports-insights', icon: <FaChartBar /> },
-    { name: 'Debt Management', path: '/debt-management', icon: <FaMoneyBillWave /> },
   ];
 
   const styles = {

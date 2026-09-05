@@ -1,28 +1,26 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 
 const ProtectedRoute = ({ element: Component }) => {
-  const token = useSelector((state) => state.auth?.token) || localStorage.getItem('token'); // Check both Redux and localStorage
+  const token = useSelector((state) => state.auth?.token) || localStorage.getItem('token');
   const [isValid, setIsValid] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
-        setIsValid(false); // No token, consider invalid
+        setIsValid(false);
         setLoading(false);
         return;
       }
-      
+
       try {
-        await axios.get('http://localhost:5000/api/auth/check', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setIsValid(true); // Token is valid
+        await api.get('/auth/check');
+        setIsValid(true);
       } catch {
-        setIsValid(false); // Token is invalid
+        setIsValid(false);
       } finally {
         setLoading(false);
       }
@@ -31,9 +29,9 @@ const ProtectedRoute = ({ element: Component }) => {
     validateToken();
   }, [token]);
 
-  if (loading) return <div>Loading...</div>; // Optional loading state
-  if (!isValid) return <Navigate to="/signin" />; // Redirect to sign-in if not authenticated
-  return <Component />; // Render protected route component
+  if (loading) return <div>Loading...</div>;
+  if (!isValid) return <Navigate to="/signin" />;
+  return <Component />;
 };
 
 export default ProtectedRoute;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import api from "../services/api";
 
 function BudgetTracker() {
   const [budgets, setBudgets] = useState([]);
@@ -17,26 +18,19 @@ function BudgetTracker() {
   useEffect(() => {
     const fetchBudgets = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/budgets", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const response = await api.get('/budgets');
+        const data = response.data;
+        setBudgets(data);
 
-        if (response.ok) {
-          const data = await response.json();
-          setBudgets(data);
+        // Retrieve stored values
+        const savedMonth = localStorage.getItem("selectedMonth");
+        const savedAlert = localStorage.getItem("alertPercent");
 
-          // Retrieve stored values
-          const savedMonth = localStorage.getItem("selectedMonth");
-          const savedAlert = localStorage.getItem("alertPercent");
+        if (savedMonth) setMonth(savedMonth);
+        if (savedAlert) setAlertPercent(savedAlert);
 
-          if (savedMonth) setMonth(savedMonth);
-          if (savedAlert) setAlertPercent(savedAlert);
-
-          if (data.length > 0 || (savedMonth && savedAlert)) {
-            setIsLocked(true);
-          }
-        } else {
-          console.error("Failed to fetch budgets.");
+        if (data.length > 0 || (savedMonth && savedAlert)) {
+          setIsLocked(true);
         }
       } catch (error) {
         console.error("Error fetching budgets:", error);
@@ -78,30 +72,19 @@ function BudgetTracker() {
       }
 
       try {
-        const response = await fetch("http://localhost:5000/api/budgets", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({
-            category: formData.category,
-            amount: Number(formData.amount),
-            month,
-            alerts: Number(alertPercent),
-            duration: "monthly",
-          }),
+        const response = await api.post('/budgets', {
+          category: formData.category,
+          amount: Number(formData.amount),
+          month,
+          alerts: Number(alertPercent),
+          duration: "monthly",
         });
 
-        if (response.ok) {
-          const newBudget = await response.json();
-          setBudgets([...budgets, newBudget]);
-          setFormData({ category: "", amount: "" });
-        } else {
-          console.error("Failed to add budget.");
-        }
+        setBudgets([...budgets, response.data]);
+        setFormData({ category: "", amount: "" });
       } catch (error) {
         console.error("Error adding budget:", error);
+        alert(error.response?.data?.error || "Failed to add budget.");
       }
     } else {
       alert("Please fill in all required fields.");
@@ -111,18 +94,11 @@ function BudgetTracker() {
   // Delete a budget entry
   const handleDeleteBudget = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/budgets/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-
-      if (response.ok) {
-        setBudgets(budgets.filter((budget) => budget._id !== id));
-      } else {
-        alert("Failed to delete budget.");
-      }
+      await api.delete(`/budgets/${id}`);
+      setBudgets(budgets.filter((budget) => budget._id !== id));
     } catch (error) {
       console.error("Error deleting budget:", error);
+      alert(error.response?.data?.error || "Failed to delete budget.");
     }
   };
 

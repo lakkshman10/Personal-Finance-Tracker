@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AgCharts } from "ag-charts-react";
+import api from "../services/api";
 
 function ExpenseTracker() {
   const [expenses, setExpenses] = useState([]);
@@ -14,18 +15,8 @@ function ExpenseTracker() {
   useEffect(() => {
     const fetchExpenses = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/expenses", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setExpenses(data); // Load expenses from the backend
-        } else {
-          console.error("Failed to fetch expenses.");
-        }
+        const response = await api.get('/expenses');
+        setExpenses(response.data);
       } catch (error) {
         console.error("Error fetching expenses:", error);
       }
@@ -44,24 +35,12 @@ function ExpenseTracker() {
     }
     if (formData.amount && formData.category && formData.date) {
       try {
-        const response = await fetch("http://localhost:5000/api/expenses", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(formData),
-        });
-
-        if (response.ok) {
-          const newExpense = await response.json();
-          setExpenses([...expenses, newExpense]); // Add the new expense to the list
-          setFormData({ amount: "", category: "", description: "", date: "" });
-        } else {
-          alert("Failed to add expense.");
-        }
+        const response = await api.post('/expenses', formData);
+        setExpenses([...expenses, response.data]);
+        setFormData({ amount: "", category: "", description: "", date: "" });
       } catch (error) {
         console.error("Error adding expense:", error);
+        alert(error.response?.data?.error || "Failed to add expense.");
       }
     } else {
       alert("Please fill in all required fields.");
@@ -71,25 +50,13 @@ function ExpenseTracker() {
   // Delete an expense
   const handleDeleteExpense = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/expenses/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      if (response.ok) {
-        setExpenses(expenses.filter((expense) => expense._id !== id)); // Remove deleted expense
-      } else {
-        alert("Failed to delete expense.");
-      }
+      await api.delete(`/expenses/${id}`);
+      setExpenses(expenses.filter((expense) => expense._id !== id));
     } catch (error) {
       console.error("Error deleting expense:", error);
+      alert(error.response?.data?.error || "Failed to delete expense.");
     }
   };
-
-  // Reset all expenses (for local state only)
-  const handleReset = () => setExpenses([]);
 
   // Process data for Pie Chart
   const currentMonth = new Date().getMonth(); // Current month (0-11)
@@ -125,32 +92,17 @@ function ExpenseTracker() {
   const handleUpdateExpense = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/expenses/${editExpenseId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(formData),
-        }
+      const response = await api.put(`/expenses/${editExpenseId}`, formData);
+      setExpenses(
+        expenses.map((expense) =>
+          expense._id === editExpenseId ? response.data : expense
+        )
       );
-
-      if (response.ok) {
-        const updatedExpense = await response.json();
-        setExpenses(
-          expenses.map((expense) =>
-            expense._id === editExpenseId ? updatedExpense : expense
-          )
-        );
-        setEditExpenseId(null);
-        setFormData({ amount: "", category: "", description: "", date: "" });
-      } else {
-        alert("Failed to update expense.");
-      }
+      setEditExpenseId(null);
+      setFormData({ amount: "", category: "", description: "", date: "" });
     } catch (error) {
       console.error("Error updating expense:", error);
+      alert(error.response?.data?.error || "Failed to update expense.");
     }
   };
 
@@ -167,18 +119,8 @@ function ExpenseTracker() {
   useEffect(() => {
     const fetchMonthlyTrends = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/expenses/trends', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-  
-        if (response.ok) {
-          const data = await response.json();
-          setMonthlyTrends(data);
-        } else {
-          console.error('Failed to fetch trends.');
-        }
+        const response = await api.get('/expenses/trends');
+        setMonthlyTrends(response.data);
       } catch (error) {
         console.error('Error fetching trends:', error);
       }
@@ -303,13 +245,18 @@ function ExpenseTracker() {
               <button type="submit" style={styles.button} >
                 {editExpenseId ? "Update Expense" : "Add Expense"}
               </button>
-              <button
-                type="button"
-                onClick={handleReset}
-                style={styles.resetButton}
-              >
-                Reset All Expenses
-              </button>
+              {editExpenseId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditExpenseId(null);
+                    setFormData({ amount: "", category: "", description: "", date: "" });
+                  }}
+                  style={styles.resetButton}
+                >
+                  Cancel Edit
+                </button>
+              )}
             </div>
           </form>
         </div>

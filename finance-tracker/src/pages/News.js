@@ -10,13 +10,13 @@ function Blog() {
 
   // Fetching data from API
   useEffect(() => {
+    const apiKey = process.env.REACT_APP_NEWS_API_KEY || 'pub_59461f3f40b0cb9d31f4a62f88602b748abc7';
     axios
-      .get('https://newsdata.io/api/1/news?apikey=pub_59461f3f40b0cb9d31f4a62f88602b748abc7&q=finance&country=in&language=en')
+      .get(`https://newsdata.io/api/1/news?apikey=${apiKey}&q=finance&country=in&language=en`)
       .then((response) => {
-        console.log('Fetched blogs:', response.data.results); // Log API response
-        const fetchedBlogs = response.data.results;
+        const fetchedBlogs = response.data?.results || [];
         fetchedBlogs.forEach(blog => {
-          blog.imageUrl = blog.image_url || 'https://via.placeholder.com/300'; // Use placeholder if no image
+          blog.imageUrl = blog.image_url || 'https://via.placeholder.com/300';
         });
         setBlogs(fetchedBlogs);
         setLoading(false);

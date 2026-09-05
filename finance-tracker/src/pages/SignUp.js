@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import Signupimage from '../assets/signup.png';
 
 const SignUp = () => {
@@ -21,7 +21,7 @@ const SignUp = () => {
     e.preventDefault();
     
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/signup', formData);
+      const response = await api.post('/auth/signup', formData);
       setSuccessMessage(response.data.message);
       setError('');  // Reset error message if the request is successful
 

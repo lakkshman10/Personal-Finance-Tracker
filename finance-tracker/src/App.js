@@ -73,11 +73,10 @@ function MainContent({ isSidebarCollapsed, toggleSidebar }) {
             {/* Non-protected routes */}
             <Route path="/" element={<Navigate to="/home" />} />
             <Route path="/home" element={<Home />} />
-            <Route path="/home" element={<Home />} />
             <Route path="/Financenews" element={<News />} />
             <Route path="/FinanceAssistant" element={<FinanceAssistant />} />
             <Route path="/Community" element={<Community />} />
-            <Route path="/ContactUs" element={<ContactUs />} />
+            <Route path="/Contactus" element={<ContactUs />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
 

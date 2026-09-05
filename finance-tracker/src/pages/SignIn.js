@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { setToken, setUser } from '../redux/actions';
@@ -26,11 +26,7 @@ const SignIn = () => {
     }
 
     try {
-      const response = await axios.post(
-        'http://localhost:5000/api/auth/signin',
-        { email, password },
-        { withCredentials: true }
-      );
+      const response = await api.post('/auth/signin', { email, password });
 
       const { accessToken, user } = response.data;
 
