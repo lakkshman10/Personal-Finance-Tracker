@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const expensesRoutes = require('./routes/expenseAuth');
 const budgetRoutes = require('./routes/budgetAuth');
+const newsRoutes = require('./routes/news');
 
 const app = express();
 
@@ -30,6 +31,7 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expensesRoutes);
 app.use('/api/budgets', budgetRoutes);
+app.use('/api/news', newsRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

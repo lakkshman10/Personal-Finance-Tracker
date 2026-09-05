@@ -25,11 +25,29 @@ api.interceptors.request.use(
 // Response interceptor: centralize error logging and 401 handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Unauthorized or token expired
-      console.warn('API returned 401 Unauthorized.');
+  async (error) => {
+    const originalRequest = error.config;
+    const requestUrl = originalRequest?.url || '';
+    const isAuthRequest = /\/auth\/(signin|signup|logout|refresh-token)/.test(requestUrl);
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRequest) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshResponse = await api.post('/auth/refresh-token');
+        const { accessToken } = refreshResponse.data;
+        localStorage.setItem('token', accessToken);
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.replace('/signin');
+        return Promise.reject(refreshError);
+      }
     }
+
     return Promise.reject(error);
   }
 );

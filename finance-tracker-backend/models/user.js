@@ -19,6 +19,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  preferences: {
+    budgetMonth: { type: String, default: '' },
+    alertPercent: { type: Number, default: 80 },
+  },
 }, {
   timestamps: true, // Automatically adds createdAt and updatedAt fields
 });

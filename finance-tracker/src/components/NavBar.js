@@ -1,26 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutUser } from '../redux/actions';
+import api from '../services/api';
 import logo from '../assets/logo.png';
+import './NavBar.css';
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Dropdown menu state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const token = useSelector((state) => state.auth?.token);
 
   useEffect(() => {
     setIsAuthenticated(!!token); // Sync Redux token state with local isAuthenticated
   }, [token]);
 
-  const handleLogout = () => {
-    dispatch(logoutUser()); // Clear Redux state
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+
+    dispatch(logoutUser());
     localStorage.removeItem('token'); // Clear localStorage
     localStorage.removeItem('user');
     setIsAuthenticated(false); // Update state
     setIsDropdownOpen(false); // Close dropdown
-    window.location.href = '/signin'; // Redirect to sign-in
+    navigate('/signin');
   };
 
   const toggleDropdown = () => {
@@ -72,10 +81,10 @@ const Navbar = () => {
                 visibility: isDropdownOpen ? 'visible' : 'hidden',
               }}
             >
-              <Link to="/account" style={styles.dropdownItem}>
+              <Link to="/account" className="navbar-dropdown-item" style={styles.dropdownItem}>
                 Account
               </Link>
-              <button style={styles.dropdownItem} onClick={handleLogout}>
+              <button className="navbar-dropdown-item" style={styles.dropdownItem} onClick={handleLogout}>
                 Logout
               </button>
             </div>
@@ -193,10 +202,6 @@ const styles = {
     textDecoration: 'none',
     cursor: 'pointer',
     transition: 'background-color 0.3s ease',
-    ':hover': {
-      backgroundColor: '#f0f0f0',
-      color: '#000',
-    },
   },
 };
 

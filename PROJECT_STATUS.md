@@ -4,7 +4,7 @@
 **Repository:** `lakkshman10/Personal-Finance-Tracker`
 **Branch:** `main`
 **Status:** Active Development
-**Last reviewed:** 2026-08-27
+**Last reviewed:** 2026-09-06
 
 ---
 
@@ -37,7 +37,10 @@ The core application is functional, but several major financial modules are stil
 | Signup                  | ✅ Implemented         | JWT authentication flow                    |
 | Signin                  | ✅ Implemented         | JWT authentication flow                    |
 | Protected routes        | ✅ Implemented         | ProtectedRoute + backend middleware        |
-| Token refresh           | ✅ Implemented         | Backend route exists                       |
+| Token refresh           | 🟡 Partial            | Refresh route exists; expired-token status contract needs alignment |
+| Server-side logout      | ✅ Implemented         | Refresh cookie is cleared                  |
+| Auth rate limiting      | ✅ Implemented         | Signup/signin limited to 10 requests/15 minutes |
+| User preferences        | ✅ Implemented         | Budget month and alert percentage persist in MongoDB |
 | Expense creation        | ✅ Implemented         | Authenticated API                          |
 | Expense retrieval       | ✅ Implemented         | Authenticated API                          |
 | Expense editing         | ✅ Implemented         | Authenticated API                          |
@@ -47,6 +50,7 @@ The core application is functional, but several major financial modules are stil
 | Monthly trends          | 🟡 Partial            | Backend infrastructure exists              |
 | Monthly summaries       | 🟡 Partial            | MongoDB model exists                       |
 | Budget CRUD             | ✅ Implemented         | Authenticated API                          |
+| Finance news            | ✅ Implemented         | Alpha Vantage proxy and frontend feed      |
 | Budget alerts           | 🟡 Partial            | Alert percentage exists                    |
 | Budget usage            | 🟡 Partial            | Needs complete/verify business logic       |
 | Budget adjustment rules | 🔴 Not completed      | Needs implementation/verification          |
@@ -83,7 +87,6 @@ React Frontend
 │   ├── NavBar
 │   ├── Sidebar
 │   ├── Footer
-│   ├── FeatureCard
 │   └── ProtectedRoute
 │
 └── Redux
@@ -97,7 +100,8 @@ Node.js / Express Backend
 ├── Routes
 │   ├── auth
 │   ├── expenses
-│   └── budgets
+│   ├── budgets
+│   └── news
 │
 ├── Controllers
 │   ├── authController
@@ -221,7 +225,7 @@ These are intentionally not current priorities.
 
 * Dashboard contains mock/static financial data.
 * Several pages are placeholders.
-* Some API URLs are directly hardcoded to `localhost:5000`.
+* Some legacy frontend code may still contain direct local API URLs; the shared API service is the preferred path.
 * State synchronization between independent financial features needs improvement.
 * Test coverage is minimal.
 * Some styling and component logic are embedded directly in page files.
@@ -396,6 +400,19 @@ Only after this milestone should we move aggressively into Income, Savings Goals
 * Unused dependencies pruned (`chart.js`, `dexie`, `bcryptjs`).
 * Database connection modernized and consolidated via `config/db.js` and `server.js`.
 * Environment variable templates (`.env.example`) added for frontend and backend.
+
+## 2026-09-06
+
+* Added signup/signin rate limiting with `express-rate-limit`.
+* Added stronger signup password validation and server-side logout.
+* Added MongoDB-backed user preferences for Budgeting month and alert percentage.
+* Refactored monthly summary synchronization to use MongoDB aggregation.
+* Added frontend access-token refresh/retry handling; backend expired-token status alignment remains pending.
+* Migrated Budgeting preferences from `localStorage` to the backend API.
+* Removed the hardcoded News API fallback and added graceful provider error handling.
+* Added an Alpha Vantage News proxy at `/api/news` to avoid browser CORS and keep the provider key server-side.
+* Replaced Navbar full-page logout navigation with React Router navigation and externalized hover CSS.
+* Removed the unused `FeatureCard` component.
 
 ## 2026-08-27
 

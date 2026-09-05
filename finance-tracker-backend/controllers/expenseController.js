@@ -4,27 +4,43 @@ const MonthlySummary = require('../models/MonthlySummary');
 const ALLOWED_CATEGORIES = ['Food', 'Travel', 'Bills', 'Entertainment', 'Others'];
 
 // Helper to synchronize MonthlySummary with actual Expense records for a month.
-// This guarantees that totalExpenses and category breakdowns are never negative.
+// Refactored to use MongoDB aggregation pipeline for performance and scalability.
 const syncMonthlySummary = async (userId, month) => {
+  const mongoose = require('mongoose');
   const [year, m] = month.split('-').map(Number);
   const startDate = new Date(Date.UTC(year, m - 1, 1, 0, 0, 0, 0));
   const endDate = new Date(Date.UTC(year, m, 0, 23, 59, 59, 999));
 
-  const expenses = await Expense.find({
-    userId,
-    date: { $gte: startDate, $lte: endDate },
-  });
+  const userObjectId = mongoose.Types.ObjectId.isValid(userId)
+    ? new mongoose.Types.ObjectId(userId)
+    : userId;
+
+  const aggregationResult = await Expense.aggregate([
+    {
+      $match: {
+        userId: userObjectId,
+        date: { $gte: startDate, $lte: endDate },
+      },
+    },
+    {
+      $group: {
+        _id: '$category',
+        categoryTotal: { $sum: '$amount' },
+      },
+    },
+  ]);
 
   let totalExpenses = 0;
   const categoriesBreakdown = {};
 
-  for (const exp of expenses) {
-    const amt = Number(exp.amount) || 0;
+  for (const item of aggregationResult) {
+    const amt = Number(item.categoryTotal) || 0;
     totalExpenses += amt;
-    categoriesBreakdown[exp.category] = (categoriesBreakdown[exp.category] || 0) + amt;
+    if (item._id) {
+      categoriesBreakdown[item._id] = Math.round(amt * 100) / 100;
+    }
   }
 
-  // Ensure totalExpenses is never negative and rounded to 2 decimal places
   totalExpenses = Math.max(0, Math.round(totalExpenses * 100) / 100);
 
   await MonthlySummary.findOneAndUpdate(

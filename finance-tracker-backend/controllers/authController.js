@@ -2,6 +2,8 @@ const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+const defaultPreferences = { budgetMonth: '', alertPercent: 80 };
+
 // Helper function to generate tokens
 const generateTokens = (userId, email) => {
   const accessToken = jwt.sign(
@@ -24,6 +26,13 @@ const signup = async (req, res) => {
 
     if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        message: 'Password must be at least 8 characters long and contain a number and a special character.',
+      });
     }
 
     const existingUser = await User.findOne({ email });
@@ -76,6 +85,8 @@ const signin = async (req, res) => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -87,28 +98,42 @@ const signin = async (req, res) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        preferences: user.preferences || { budgetMonth: '', alertPercent: 80 },
       },
     });
   } catch (error) {
-    console.error('Signin error:', error); // Logs detailed error for debugging
+    console.error('Signin error:', error);
     return res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
 
+// Logout controller
+const logout = async (req, res) => {
+  try {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+    res.clearCookie('token');
+    return res.status(200).json({ message: 'Logged out successfully.' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return res.status(500).json({ message: 'Error logging out.' });
+  }
+};
 
 // Check token validity
 const check = async (req, res) => {
-  const token = req.cookies.token || req.headers['authorization']?.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ message: 'No token provided. Not authenticated.' });
-  }
-
   try {
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    res.status(200).json({ message: 'User is authenticated.', user: decoded });
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+    res.status(200).json({ message: 'User is authenticated.', user });
   } catch (error) {
-    res.status(403).json({ message: 'Token is invalid or expired.' });
+    res.status(500).json({ message: 'Failed to check authentication.' });
   }
 };
 
@@ -124,16 +149,54 @@ const refreshToken = async (req, res) => {
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
     const { accessToken } = generateTokens(decoded.userId, decoded.email);
 
-    res.cookie('token', accessToken, { httpOnly: true });
     res.status(200).json({ message: 'Token refreshed successfully.', accessToken });
   } catch (error) {
     res.status(403).json({ message: 'Refresh token is invalid or expired.' });
   }
 };
 
+// Get User Preferences
+const getPreferences = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    res.status(200).json(user.preferences || defaultPreferences);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch preferences.' });
+  }
+};
+
+// Update User Preferences
+const updatePreferences = async (req, res) => {
+  try {
+    const { budgetMonth, alertPercent } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    if (budgetMonth !== undefined && !/^\d{4}-(0[1-9]|1[0-2])$/.test(budgetMonth)) {
+      return res.status(400).json({ error: 'budgetMonth must use YYYY-MM format.' });
+    }
+    if (alertPercent !== undefined && (!Number.isFinite(Number(alertPercent)) || Number(alertPercent) < 0 || Number(alertPercent) > 100)) {
+      return res.status(400).json({ error: 'alertPercent must be between 0 and 100.' });
+    }
+
+    user.preferences = user.preferences || { ...defaultPreferences };
+    if (budgetMonth !== undefined) user.preferences.budgetMonth = budgetMonth;
+    if (alertPercent !== undefined) user.preferences.alertPercent = Number(alertPercent);
+
+    await user.save();
+    res.status(200).json(user.preferences);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update preferences.' });
+  }
+};
+
 module.exports = {
   signup,
   signin,
+  logout,
   check,
   refreshToken,
+  getPreferences,
+  updatePreferences,
 };

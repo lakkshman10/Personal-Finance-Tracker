@@ -14,24 +14,20 @@ function BudgetTracker() {
   const [budgetListCardHovered, setBudgetListCardHovered] = useState(false);
   const [buttonHovered, setButtonHovered] = useState(false);
 
-  // Fetch budgets and initialize alert & month from localStorage
+  // Fetch budgets and initialize preferences from the authenticated user.
   useEffect(() => {
     const fetchBudgets = async () => {
       try {
-        const response = await api.get('/budgets');
-        const data = response.data;
-        setBudgets(data);
+        const [budgetsResponse, preferencesResponse] = await Promise.all([
+          api.get('/budgets'),
+          api.get('/auth/preferences'),
+        ]);
+        const preferences = preferencesResponse.data || {};
 
-        // Retrieve stored values
-        const savedMonth = localStorage.getItem("selectedMonth");
-        const savedAlert = localStorage.getItem("alertPercent");
-
-        if (savedMonth) setMonth(savedMonth);
-        if (savedAlert) setAlertPercent(savedAlert);
-
-        if (data.length > 0 || (savedMonth && savedAlert)) {
-          setIsLocked(true);
-        }
+        setBudgets(budgetsResponse.data);
+        setMonth(preferences.budgetMonth || '');
+        setAlertPercent(preferences.alertPercent ?? 80);
+        setIsLocked(budgetsResponse.data.length > 0 || Boolean(preferences.budgetMonth));
       } catch (error) {
         console.error("Error fetching budgets:", error);
       }
@@ -47,9 +43,20 @@ function BudgetTracker() {
       return;
     }
 
-    localStorage.setItem("selectedMonth", month);
-    localStorage.setItem("alertPercent", alertPercent);
-    setIsLocked(true);
+    const savePreferences = async () => {
+      try {
+        await api.put('/auth/preferences', {
+          budgetMonth: month,
+          alertPercent: Number(alertPercent),
+        });
+        setIsLocked(true);
+      } catch (error) {
+        console.error("Error saving budget preferences:", error);
+        alert(error.response?.data?.error || "Failed to save budget preferences.");
+      }
+    };
+
+    savePreferences();
   };
 
   // Add new budget entry

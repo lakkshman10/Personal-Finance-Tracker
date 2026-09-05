@@ -1,8 +1,4 @@
 const mongoose = require('mongoose');
-const dns = require('dns');
-
-// Set public DNS servers to prevent SRV lookup failures (querySrv ECONNREFUSED) from local ISP DNS
-dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const connectDB = async () => {
   try {

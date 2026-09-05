@@ -1,30 +1,35 @@
 import React, { useEffect, useState } from 'react'; 
-import axios from 'axios';
+import api from '../services/api';
 
 function Blog() {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const blogsPerPage = 6; // Number of blogs per page
 
-  // Fetching data from API
+  // Fetch finance news from Alpha Vantage's NEWS_SENTIMENT endpoint.
   useEffect(() => {
-    const apiKey = process.env.REACT_APP_NEWS_API_KEY || 'pub_59461f3f40b0cb9d31f4a62f88602b748abc7';
-    axios
-      .get(`https://newsdata.io/api/1/news?apikey=${apiKey}&q=finance&country=in&language=en`)
+    api.get('/news')
       .then((response) => {
-        const fetchedBlogs = response.data?.results || [];
-        fetchedBlogs.forEach(blog => {
-          blog.imageUrl = blog.image_url || 'https://via.placeholder.com/300';
-        });
+        if (response.data?.Note || response.data?.Information || response.data?.ErrorMessage) {
+          throw new Error(response.data.Note || response.data.Information || response.data.ErrorMessage);
+        }
+
+        const fetchedBlogs = (response.data?.feed || []).map((article) => ({
+          title: article.title,
+          description: article.summary,
+          link: article.url,
+          imageUrl: article.banner_image || 'https://via.placeholder.com/300',
+        }));
         setBlogs(fetchedBlogs);
-        setLoading(false);
       })
-      .catch((error) => {
-        console.error('Error fetching blogs:', error);
-        setLoading(false);
-      });
+      .catch((requestError) => {
+        console.error('Error fetching blogs:', requestError);
+        setError('Unable to load finance news right now. Please try again later.');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   // Filtering blogs based on search query
@@ -44,6 +49,10 @@ function Blog() {
 
   if (loading) {
     return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p style={styles.error}>{error}</p>;
   }
 
   return (
@@ -100,6 +109,12 @@ const styles = {
     textAlign: 'center',
     marginBottom: '20px',
     fontWeight: 'bold',
+  },
+  error: {
+    padding: '40px 20px',
+    color: '#6b7280',
+    textAlign: 'center',
+    fontFamily: 'Rubik',
   },
   searchInput: {
     width: '100%',
