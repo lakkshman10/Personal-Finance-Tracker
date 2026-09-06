@@ -12,8 +12,8 @@ CREATE TABLE "debts" (
     "minimum_payment" DECIMAL(14,2),
     "due_day" INTEGER,
     "status" "DebtStatus" NOT NULL DEFAULT 'ACTIVE',
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMPTZ NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "debts_pkey" PRIMARY KEY ("id")
 );
 
@@ -25,7 +25,7 @@ CREATE TABLE "debt_payments" (
     "transaction_id" UUID NOT NULL,
     "amount" DECIMAL(14,2) NOT NULL,
     "payment_date" DATE NOT NULL,
-    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "debt_payments_pkey" PRIMARY KEY ("id")
 );
 
