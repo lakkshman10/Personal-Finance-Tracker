@@ -24,6 +24,14 @@ const financeApi = {
     update: (id, data) => api.patch(`/postgres/budgets/${id}`, data),
     remove: (id) => api.delete(`/postgres/budgets/${id}`),
   },
+  savingsGoals: {
+    list: () => api.get('/savings-goals'),
+    create: (data) => api.post('/savings-goals', data),
+    update: (id, data) => api.patch(`/savings-goals/${id}`, data),
+    remove: (id) => api.delete(`/savings-goals/${id}`),
+    addContribution: (id, data) => api.post(`/savings-goals/${id}/contributions`, data),
+    removeContribution: (contributionId) => api.delete(`/savings-goals/contributions/${contributionId}`),
+  },
 };
 
 export default financeApi;
