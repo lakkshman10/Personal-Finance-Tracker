@@ -1,5 +1,6 @@
 import api from './api';
 
+// PostgreSQL-backed financial API client.
 const financeApi = {
   accounts: {
     list: (params) => api.get('/accounts', { params }),
