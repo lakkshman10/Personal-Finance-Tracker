@@ -1,9 +1,9 @@
 const express = require('express');
-const authenticateToken = require('../middlewares/authMiddleware');
+const authenticateFinanceUser = require('../middlewares/financeAuthMiddleware');
 const categoryService = require('../services/categoryService');
 
 const router = express.Router();
-router.use(authenticateToken);
+router.use(authenticateFinanceUser);
 
 router.get('/', async (req, res) => {
   try {
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
 
 router.patch('/:id', async (req, res) => {
   try {
-    const category = await categoryService.update(req.user.id, req.params.id, req.body);
+    const category = await categoryService.update(req.user.id, req.params.id, req.body || {});
     if (!category) return res.status(404).json({ message: 'Category not found.' });
     return res.json(category);
   } catch (error) {
