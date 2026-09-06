@@ -1,29 +1,22 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const prisma = require('../config/prisma');
 
 const router = express.Router();
 
 router.get('/db', async (req, res) => {
-  let postgresql = 'disconnected';
-  let mongodb = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-
   try {
     await prisma.$queryRaw`SELECT 1`;
-    postgresql = 'connected';
+    return res.status(200).json({
+      status: 'ok',
+      databases: { postgresql: 'connected' },
+    });
   } catch (error) {
     console.error('PostgreSQL health check failed:', error.message);
+    return res.status(503).json({
+      status: 'error',
+      databases: { postgresql: 'disconnected' },
+    });
   }
-
-  const healthy = postgresql === 'connected' && mongodb === 'connected';
-
-  res.status(healthy ? 200 : 503).json({
-    status: healthy ? 'ok' : 'error',
-    databases: {
-      postgresql,
-      mongodb,
-    },
-  });
 });
 
 module.exports = router;
