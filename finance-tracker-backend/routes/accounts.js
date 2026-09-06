@@ -1,9 +1,9 @@
 const express = require('express');
-const authenticateToken = require('../middlewares/authMiddleware');
+const authenticateFinanceUser = require('../middlewares/financeAuthMiddleware');
 const accountService = require('../services/accountService');
 
 const router = express.Router();
-router.use(authenticateToken);
+router.use(authenticateFinanceUser);
 
 router.get('/', async (req, res) => {
   try {
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
 
 router.patch('/:id', async (req, res) => {
   try {
-    const account = await accountService.update(req.user.id, req.params.id, req.body);
+    const account = await accountService.update(req.user.id, req.params.id, req.body || {});
     if (!account) return res.status(404).json({ message: 'Account not found.' });
     return res.json(account);
   } catch (error) {
