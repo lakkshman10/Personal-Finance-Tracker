@@ -1,581 +1,95 @@
 # Personal Finance Tracker
 
-A full-stack personal finance management application for tracking expenses, managing monthly budgets, visualizing spending, and eventually providing a complete view of personal finances.
+A full-stack personal finance application for tracking expenses, managing budgets, visualizing spending, and progressively adding income, savings, reports, and financial assistance features.
 
-The project is being developed incrementally with a React frontend and Node.js/Express backend backed by MongoDB.
+## Current architecture
 
-> **Project status:** Active development
-> **Current focus:** Stabilizing and completing the core expense + budgeting experience
+```text
+React frontend
+      │
+      ▼
+Node.js / Express REST API
+      │
+      ▼
+Services + Repositories
+      │
+      ▼
+Prisma
+      │
+      ▼
+PostgreSQL
+```
 
----
+**PostgreSQL is now the single application datastore for authentication and financial data. MongoDB/Mongoose is no longer used by the backend runtime.**
 
-## 🎯 Project Vision
+## Implemented
 
-The goal is to build a practical personal finance application that goes beyond simple expense recording.
+- React Router application and PWA foundation
+- Signup/signin with JWT authentication
+- PostgreSQL user accounts via Prisma
+- Access-token refresh with HttpOnly refresh cookie
+- Expense Tracker backed by PostgreSQL transactions
+- Expense CRUD and current-month/category visualizations
+- Monthly expense trends derived from transactions
+- PostgreSQL accounts and categories
+- Budget CRUD backed by PostgreSQL
+- Budget adjustment history and one-adjustment business rule
+- Dashboard derived from PostgreSQL transactions and budgets
+- Finance News page and backend proxy
+- Redux state-management foundation
+- Community, Contact, and Finance Assistant foundations
 
-The finished application should help users:
+## Database
 
-* Track daily expenses
-* Understand where their money is going
-* Set and monitor monthly budgets
-* Track income
-* Set savings goals
-* Understand financial trends
-* Generate useful reports and insights
-* Eventually manage debts and other financial commitments
-* Eventually provide intelligent financial assistance
+Prisma schema and migrations live under `finance-tracker-backend/prisma`.
 
-The application should remain simple enough for everyday use while gradually becoming a complete personal financial management system.
+Core tables:
 
----
+- `users`
+- `accounts`
+- `categories`
+- `transactions`
+- `budgets`
+- `budget_adjustments`
 
-## 🚀 Current Status
+Money is stored as PostgreSQL `NUMERIC(14,2)`, identifiers are UUIDs, and transaction dates are stored separately from timestamps.
 
-### Implemented
-
-* React frontend
-* React Router-based application structure
-* PWA/service-worker foundation
-* User signup
-* User signin
-* JWT authentication
-* Protected routes
-* Token refresh endpoint
-* MongoDB/Mongoose backend
-* Expense creation
-* Expense retrieval
-* Expense update
-* Expense deletion
-* Monthly expense trend API
-* Expense category selection
-* Expense description
-* Expense date handling
-* Expense visualizations
-* Monthly summary data model
-* Budget creation
-* Budget retrieval
-* Budget update
-* Budget deletion
-* Budget month selection
-* Budget alert percentage
-* Budget category handling
-* Special handling for the `Others` category
-* Redux state management foundation
-* Dashboard page
-* Navigation/sidebar structure
-* Community page
-* Contact page
-* Finance Assistant page foundation
-* News page
-
-### Partially implemented
-
-* Dashboard
-
-  * UI exists
-  * Charts exist
-  * Some data is still mock/static data
-  * Needs to be connected to real financial data
-
-* Budgeting
-
-  * Core CRUD functionality exists
-  * Monthly/alert configuration exists
-  * Additional business rules and UX still need refinement
-
-* Expense analytics
-
-  * Expense charts exist
-  * Monthly summary infrastructure exists
-  * Real-time synchronization between expense changes and all dependent views needs improvement
-
-* PWA
-
-  * Service-worker infrastructure exists
-  * Full offline-first behaviour is not yet a completed feature
-
-### Not implemented yet
-
-* Income tracking
-* Savings goals
-* Reports & Insights
-* Debt management
-* Advanced financial analytics
-* Production-grade deployment
-* Automated testing coverage
-* Full offline synchronization
-* Bank/UPI integrations
-* AI-powered financial insights
-
----
-
-## 🏗️ Technology Stack
-
-### Frontend
-
-* React
-* React Router
-* Redux
-* Recharts
-* AG Charts
-* React Bootstrap
-* CSS
-* PWA/service-worker support
+## Local setup
 
 ### Backend
 
-* Node.js
-* Express.js
-* MongoDB
-* Mongoose
-* JWT
-* bcrypt/bcryptjs
-* CORS
-* cookie-parser
-* dotenv
-
-### Development
-
-* npm
-* Nodemon
-* Git/GitHub
-
----
-
-## 📁 Project Structure
-
-```text
-Personal-Finance-Tracker/
-│
-├── finance-tracker/
-│   ├── public/
-│   │
-│   ├── src/
-│   │   ├── assets/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── redux/
-│   │   ├── App.js
-│   │   ├── App.css
-│   │   ├── index.js
-│   │   ├── index.css
-│   │   ├── service-worker.js
-│   │   └── serviceWorkerRegistration.js
-│   │
-│   └── package.json
-│
-├── finance-tracker-backend/
-│   ├── config/
-│   ├── controllers/
-│   ├── middlewares/
-│   ├── models/
-│   ├── routes/
-│   ├── server.js
-│   └── package.json
-│
-├── README.md
-├── PROJECT_STATUS.md
-└── package-lock.json
+```bash
+cd finance-tracker-backend
+npm install
+npx prisma generate
+npx prisma migrate dev
+npm run prisma:seed
+npm run dev
 ```
 
----
+Configure `DATABASE_URL`, `ACCESS_TOKEN_SECRET`, `REFRESH_TOKEN_SECRET`, and any required news API key in `.env` using `.env.example` as the template.
 
-## 🔐 Authentication
+### Frontend
 
-Authentication is handled by the backend using JWT.
-
-Current authentication routes:
-
-```text
-POST /api/auth/signup
-POST /api/auth/signin
-GET  /api/auth/check
-POST /api/auth/refresh-token
+```bash
+cd finance-tracker
+npm install
+npm start
 ```
 
-Protected endpoints use the authentication middleware.
+## PostgreSQL migration verification
 
-The frontend also contains a `ProtectedRoute` component to prevent unauthenticated access to protected pages.
+After the migration, sign in again so the browser receives a JWT containing the PostgreSQL user UUID. Then verify:
 
----
+1. Signup/signin
+2. Protected route after refresh
+3. Expense create/edit/delete and persistence
+4. Dashboard updates
+5. Budget create/delete and persistence
+6. Token refresh
+7. `GET /api/health/db`
+8. Backend startup with MongoDB stopped
 
-## 💸 Expense Tracking
+## Future work
 
-Expense tracking is currently the most mature financial feature.
-
-### Supported operations
-
-* Add expense
-* View expenses
-* Edit expense
-* Delete expense
-
-### Current categories
-
-```text
-Food
-Travel
-Bills
-Entertainment
-Others
-```
-
-Expenses contain information such as:
-
-* Category
-* Amount
-* Description
-* Date
-
-The frontend also provides expense visualizations.
-
-### Backend endpoints
-
-```text
-POST   /api/expenses
-GET    /api/expenses
-PUT    /api/expenses/:id
-DELETE /api/expenses/:id
-GET    /api/expenses/trends
-```
-
-All expense routes are protected by JWT authentication.
-
----
-
-## 📊 Monthly Expense Trends
-
-The backend contains a monthly-trend endpoint and a `MonthlySummary` model.
-
-The monthly summary stores:
-
-* User
-* Month
-* Total expenses
-* Category breakdown
-* Created timestamp
-* Updated timestamp
-
-The model uses a unique combination of user and month.
-
-This provides the foundation for efficient historical financial analytics.
-
----
-
-## 💰 Budgeting
-
-Budgeting is currently under active development.
-
-The application supports:
-
-* Monthly budget configuration
-* Category-based budgets
-* Alert percentage
-* Creating budgets
-* Viewing budgets
-* Updating budgets
-* Deleting budgets
-* Month selection
-* Multiple `Others` entries
-
-### Backend endpoints
-
-```text
-POST   /api/budgets
-GET    /api/budgets
-PUT    /api/budgets/:id
-DELETE /api/budgets/:id
-```
-
-### Planned budgeting behaviour
-
-The final budgeting system should provide:
-
-* Budget usage
-* Remaining budget
-* Percentage consumed
-* Threshold alerts
-* Budget exceeded alerts
-* Monthly reset behaviour
-* Budget history
-* Controlled budget adjustments
-* Adjustment reasons
-
----
-
-## 📈 Dashboard
-
-The dashboard currently provides the UI foundation for:
-
-* Financial summary
-* Expense breakdown
-* Savings progress
-* Budget status
-* Alerts
-* Charts
-
-However, parts of the dashboard currently use mock/static data.
-
-### Next dashboard objective
-
-Replace mock values with real authenticated financial data.
-
-The dashboard should eventually become the central financial overview of the application.
-
----
-
-## 💵 Income Tracking
-
-### Status: Planned
-
-A frontend page placeholder exists, but the current implementation is empty.
-
-Planned capabilities:
-
-* Add income
-* Edit income
-* Delete income
-* Income categories
-* Monthly income
-* Income history
-* Income vs expense comparison
-* Net monthly cash flow
-
----
-
-## 🎯 Savings Goals
-
-### Status: Planned
-
-A frontend page placeholder exists, but the current implementation is empty.
-
-Planned capabilities:
-
-* Create savings goal
-* Set target amount
-* Set target date
-* Track contributions
-* Track progress
-* Show remaining amount
-* Show progress percentage
-* Goal history
-
----
-
-## 📑 Reports & Insights
-
-### Status: Planned
-
-A frontend page placeholder exists, but the current implementation is empty.
-
-Planned capabilities:
-
-* Monthly reports
-* Category spending analysis
-* Income vs expenses
-* Budget performance
-* Spending trends
-* Highest spending categories
-* Month-over-month comparison
-* Financial summaries
-
----
-
-## 💳 Debt Management
-
-### Status: Planned
-
-Debt management is part of the long-term product roadmap.
-
-Potential capabilities:
-
-* Add debt
-* Outstanding balance
-* Interest rate
-* EMI/payment
-* Due date
-* Payment history
-* Debt payoff progress
-* Debt payoff projections
-
----
-
-## 🤖 Finance Assistant
-
-A Finance Assistant page already exists in the frontend.
-
-The long-term objective is to evolve this into an intelligent financial assistant that can work with the user's own financial data.
-
-Possible future capabilities:
-
-* Explain spending patterns
-* Answer questions about expenses
-* Summarize monthly finances
-* Identify unusual spending
-* Suggest budget improvements
-* Explain financial trends
-
-AI integration should only be added after the underlying financial data model is reliable.
-
----
-
-## 🗺️ Long-Term Roadmap
-
-### Phase 1 — Core Foundation
-
-* [x] Authentication
-* [x] Expense tracking
-* [x] Expense CRUD
-* [x] Expense visualization
-* [x] Monthly trend infrastructure
-* [x] Basic budgeting
-
-### Phase 2 — Core Financial Product
-
-* [ ] Stabilize expense tracking
-* [ ] Fix real-time chart synchronization
-* [ ] Complete budgeting business rules
-* [ ] Connect dashboard to real data
-* [ ] Improve financial summaries
-* [ ] Improve error handling
-* [ ] Add meaningful automated tests
-
-### Phase 3 — Complete Financial Tracking
-
-* [ ] Income tracking
-* [ ] Savings goals
-* [ ] Reports & insights
-* [ ] Advanced historical analytics
-* [ ] Financial health dashboard
-
-### Phase 4 — Financial Planning
-
-* [ ] Debt management
-* [ ] Debt payoff planning
-* [ ] Recurring expenses
-* [ ] Financial projections
-
-### Phase 5 — Intelligence
-
-* [ ] Finance Assistant
-* [ ] Spending pattern detection
-* [ ] Personalized insights
-* [ ] Smart budgeting recommendations
-* [ ] AI-powered financial analysis
-
-### Phase 6 — Production
-
-* [ ] Production configuration
-* [ ] Secure environment management
-* [ ] Deployment
-* [ ] Database backup strategy
-* [ ] Monitoring
-* [ ] Performance optimization
-* [ ] Security review
-
----
-
-## 🧪 Testing
-
-Testing is currently limited.
-
-The frontend contains the default React test structure, but comprehensive application-level tests have not yet been established.
-
-Future testing should cover:
-
-* Authentication
-* Expense CRUD
-* Budget CRUD
-* Budget calculations
-* Monthly summaries
-* Dashboard calculations
-* API authorization
-* Error states
-* Important UI flows
-
----
-
-## 🔒 Security Priorities
-
-Before production deployment:
-
-* Never commit secrets
-* Keep MongoDB credentials in environment variables
-* Keep JWT secrets outside source control
-* Review token expiration/refresh behaviour
-* Validate all incoming financial data
-* Enforce authorization on every user-specific endpoint
-* Review CORS configuration
-* Review cookie/token handling
-* Add appropriate rate limiting
-* Audit dependencies
-
----
-
-## 🛠️ Development Workflow
-
-This project follows an incremental development approach.
-
-### Workflow
-
-```text
-Identify issue/feature
-        ↓
-Inspect current implementation
-        ↓
-Understand existing architecture
-        ↓
-Implement smallest appropriate change
-        ↓
-Run application
-        ↓
-Test manually
-        ↓
-Fix regressions
-        ↓
-Update PROJECT_STATUS.md
-        ↓
-Commit to Git
-```
-
-The existing architecture should be preserved wherever possible.
-
-Avoid rewriting working functionality unless there is a clear architectural reason.
-
----
-
-## 📝 Project Documentation
-
-The repository uses two documentation files:
-
-### `README.md`
-
-Contains:
-
-* Project overview
-* Architecture
-* Technology stack
-* Feature documentation
-* Setup information
-* Roadmap
-
-### `PROJECT_STATUS.md`
-
-Contains the living development state:
-
-* What is completed
-* What is currently being worked on
-* Known issues
-* Immediate next steps
-* Architecture decisions
-* Development history
-
-`PROJECT_STATUS.md` should be updated whenever a major feature or architectural decision changes.
-
----
-
-## 📌 Development Principle
-
-> Build the product incrementally, keep the existing application working, understand the current code before changing it, and prioritize correctness over adding features quickly.
-
----
+Income tracking, savings goals, reports and insights, debt management, recurring transactions, richer account management, and production hardening remain separate feature work.
