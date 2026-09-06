@@ -1,9 +1,9 @@
 const express = require('express');
-const authenticateFinanceUser = require('../middlewares/financeAuthMiddleware');
+const authenticateToken = require('../middlewares/authMiddleware');
 const accountService = require('../services/accountService');
 
 const router = express.Router();
-router.use(authenticateFinanceUser);
+router.use(authenticateToken);
 
 router.get('/', async (req, res) => {
   try {
