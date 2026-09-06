@@ -59,7 +59,7 @@ const accountService = {
     });
   },
 
-  async update(userId, id, input) {
+  async update(userId, id, input = {}) {
     const data = {};
     if (input.name !== undefined) data.name = normalizeName(input.name);
     if (input.type !== undefined) {
