@@ -5,10 +5,7 @@ require('dotenv').config();
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
-const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
-const expensesRoutes = require('./routes/expenseAuth');
-const budgetRoutes = require('./routes/budgetAuth');
 const postgresBudgetRoutes = require('./routes/postgresBudgets');
 const newsRoutes = require('./routes/news');
 const healthRoutes = require('./routes/health');
@@ -30,13 +27,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
-// Connect Database
-connectDB();
-
-// API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/expenses', expensesRoutes);
-app.use('/api/budgets', budgetRoutes);
 app.use('/api/postgres/budgets', postgresBudgetRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -49,7 +40,6 @@ const server = app.listen(PORT, () => console.log(`Server running on port ${PORT
 
 const shutdown = async (signal) => {
   console.log(`${signal} received. Shutting down gracefully...`);
-
   server.close(async () => {
     try {
       await prisma.$disconnect();
