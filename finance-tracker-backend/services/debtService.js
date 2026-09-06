@@ -2,9 +2,11 @@ const debtRepository = require('../repositories/debtRepository');
 const accountRepository = require('../repositories/accountRepository');
 const categoryRepository = require('../repositories/categoryRepository');
 
-const normalizeMoney = (value, field) => {
+const normalizeMoney = (value, field, { allowZero = false } = {}) => {
   const number = Number(value);
-  if (!Number.isFinite(number) || number <= 0) throw new Error(`${field} must be a positive number.`);
+  if (!Number.isFinite(number) || (allowZero ? number < 0 : number <= 0)) {
+    throw new Error(`${field} must be ${allowZero ? 'zero or a positive number' : 'a positive number'}.`);
+  }
   return number.toFixed(2);
 };
 
@@ -58,7 +60,7 @@ const debtService = {
     const principalAmount = normalizeMoney(input.principalAmount, 'Principal amount');
     const outstandingAmount = input.outstandingAmount === undefined || input.outstandingAmount === ''
       ? principalAmount
-      : normalizeMoney(input.outstandingAmount, 'Outstanding amount');
+      : normalizeMoney(input.outstandingAmount, 'Outstanding amount', { allowZero: true });
     if (Number(outstandingAmount) > Number(principalAmount)) throw new Error('Outstanding amount cannot exceed principal amount.');
     const outstanding = Number(outstandingAmount);
     return normalizeDebt(await debtRepository.create({
