@@ -1,9 +1,9 @@
 const express = require('express');
-const authenticateToken = require('../middlewares/authMiddleware');
+const authenticateFinanceUser = require('../middlewares/financeAuthMiddleware');
 const transactionService = require('../services/transactionService');
 
 const router = express.Router();
-router.use(authenticateToken);
+router.use(authenticateFinanceUser);
 
 router.get('/', async (req, res) => {
   try {
@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const transaction = await transactionService.create(req.user.id, req.body);
+    const transaction = await transactionService.create(req.user.id, req.body || {});
     res.status(201).json(transaction);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -31,7 +31,7 @@ router.post('/', async (req, res) => {
 
 router.patch('/:id', async (req, res) => {
   try {
-    const transaction = await transactionService.update(req.user.id, req.params.id, req.body);
+    const transaction = await transactionService.update(req.user.id, req.params.id, req.body || {});
     if (!transaction) return res.status(404).json({ message: 'Transaction not found.' });
     return res.json(transaction);
   } catch (error) {
