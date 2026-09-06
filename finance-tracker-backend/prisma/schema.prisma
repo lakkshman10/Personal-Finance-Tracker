@@ -33,6 +33,12 @@ enum BudgetDuration {
   CUSTOM
 }
 
+enum DebtStatus {
+  ACTIVE
+  PAID_OFF
+  ARCHIVED
+}
+
 model User {
   id           String    @id @default(uuid()) @db.Uuid
   firstName    String    @map("first_name") @db.VarChar(100)
@@ -44,12 +50,14 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  accounts         Account[]
-  categories       Category[]
-  transactions     Transaction[]
-  budgets          Budget[]
-  savingsGoals     SavingsGoal[]
-  savingsContributions SavingsGoalContribution[]
+  accounts              Account[]
+  categories            Category[]
+  transactions          Transaction[]
+  budgets               Budget[]
+  savingsGoals          SavingsGoal[]
+  savingsContributions  SavingsGoalContribution[]
+  debts                 Debt[]
+  debtPayments          DebtPayment[]
 
   @@map("users")
 }
@@ -113,6 +121,7 @@ model Transaction {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   account  Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
   category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  debtPayment DebtPayment?
 
   @@index([userId, transactionDate(sort: Desc)])
   @@index([userId, type, transactionDate(sort: Desc)])
@@ -186,7 +195,7 @@ model SavingsGoalContribution {
   amount         Decimal  @db.Decimal(14, 2)
   contributionDate DateTime @map("contribution_date") @db.Date
   note           String?  @db.VarChar(255)
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt      DateTime @default(now()) @db.Date
 
   goal SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
   user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -194,4 +203,43 @@ model SavingsGoalContribution {
   @@index([userId, goalId, contributionDate(sort: Desc)])
   @@index([goalId, createdAt(sort: Desc)])
   @@map("savings_goal_contributions")
+}
+
+model Debt {
+  id                String     @id @default(uuid()) @db.Uuid
+  userId            String     @map("user_id") @db.Uuid
+  name              String     @db.VarChar(120)
+  principalAmount   Decimal    @map("principal_amount") @db.Decimal(14, 2)
+  outstandingAmount Decimal    @map("outstanding_amount") @db.Decimal(14, 2)
+  interestRate      Decimal    @default(0) @map("interest_rate") @db.Decimal(7, 4)
+  minimumPayment    Decimal?   @map("minimum_payment") @db.Decimal(14, 2)
+  dueDay            Int?       @map("due_day")
+  status            DebtStatus @default(ACTIVE)
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments DebtPayment[]
+
+  @@index([userId, status])
+  @@index([userId, dueDay])
+  @@map("debts")
+}
+
+model DebtPayment {
+  id            String      @id @default(uuid()) @db.Uuid
+  debtId        String      @map("debt_id") @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  transactionId String      @unique @map("transaction_id") @db.Uuid
+  amount        Decimal     @db.Decimal(14, 2)
+  paymentDate   DateTime    @map("payment_date") @db.Date
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  debt        Debt        @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, debtId, paymentDate(sort: Desc)])
+  @@index([debtId, createdAt(sort: Desc)])
+  @@map("debt_payments")
 }
