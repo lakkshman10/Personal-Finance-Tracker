@@ -32,6 +32,9 @@ const financeApi = {
     addContribution: (id, data) => api.post(`/savings-goals/${id}/contributions`, data),
     removeContribution: (contributionId) => api.delete(`/savings-goals/contributions/${contributionId}`),
   },
+  reports: {
+    summary: () => api.get('/reports/summary'),
+  },
 };
 
 export default financeApi;
