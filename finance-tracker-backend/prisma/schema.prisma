@@ -48,6 +48,8 @@ model User {
   categories       Category[]
   transactions     Transaction[]
   budgets          Budget[]
+  savingsGoals     SavingsGoal[]
+  savingsContributions SavingsGoalContribution[]
 
   @@map("users")
 }
@@ -156,4 +158,40 @@ model BudgetAdjustment {
 
   @@index([budgetId, createdAt])
   @@map("budget_adjustments")
+}
+
+model SavingsGoal {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  name        String   @db.VarChar(120)
+  targetAmount Decimal  @map("target_amount") @db.Decimal(14, 2)
+  targetDate  DateTime? @map("target_date") @db.Date
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user          User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contributions SavingsGoalContribution[]
+
+  @@index([userId, isActive])
+  @@index([userId, targetDate])
+  @@map("savings_goals")
+}
+
+model SavingsGoalContribution {
+  id             String   @id @default(uuid()) @db.Uuid
+  goalId         String   @map("goal_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  amount         Decimal  @db.Decimal(14, 2)
+  contributionDate DateTime @map("contribution_date") @db.Date
+  note           String?  @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  goal SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, goalId, contributionDate(sort: Desc)])
+  @@index([goalId, createdAt(sort: Desc)])
+  @@map("savings_goal_contributions")
 }
