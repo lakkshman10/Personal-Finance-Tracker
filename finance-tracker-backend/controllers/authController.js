@@ -1,10 +1,7 @@
-const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const prisma = require('../config/prisma');
 
-const defaultPreferences = { budgetMonth: '', alertPercent: 80 };
-
-// Helper function to generate tokens
 const generateTokens = (userId, email) => {
   const accessToken = jwt.sign(
     { userId, email },
@@ -19,12 +16,21 @@ const generateTokens = (userId, email) => {
   return { accessToken, refreshToken };
 };
 
-// Signup controller
+const publicUser = (user) => ({
+  id: user.id,
+  email: user.email,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  currency: user.currency,
+  timezone: user.timezone,
+});
+
 const signup = async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body || {};
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !normalizedEmail || !password) {
       return res.status(400).json({ message: 'All fields are required.' });
     }
 
@@ -35,52 +41,47 @@ const signup = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists.' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ firstName, lastName, email, password: hashedPassword });
-    await newUser.save();
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        firstName: String(firstName).trim(),
+        lastName: String(lastName).trim(),
+        email: normalizedEmail,
+        passwordHash,
+      },
+    });
 
-    res.status(201).json({ message: 'User created successfully.' });
+    return res.status(201).json({ message: 'User created successfully.' });
   } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ message: 'User already exists.' });
+    }
     console.error('Signup error:', error);
-    res.status(500).json({ message: 'An error occurred. Please try again later.' });
+    return res.status(500).json({ message: 'An error occurred. Please try again later.' });
   }
 };
 
-// Signin controller
 const signin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return res.status(400).json({ message: 'Email and password are required.' });
     }
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials.' });
-    }
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (!user) return res.status(400).json({ message: 'Invalid credentials.' });
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials.' });
-    }
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials.' });
 
-    const accessToken = jwt.sign(
-      { userId: user._id, email: user.email },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: '15m' }
-    );
-
-    const refreshToken = jwt.sign(
-      { userId: user._id, email: user.email },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: '7d' }
-    );
+    const { accessToken, refreshToken } = generateTokens(user.id, user.email);
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -93,13 +94,7 @@ const signin = async (req, res) => {
     return res.status(200).json({
       message: 'Signin successful.',
       accessToken,
-      user: {
-        id: user._id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        preferences: user.preferences || { budgetMonth: '', alertPercent: 80 },
-      },
+      user: publicUser(user),
     });
   } catch (error) {
     console.error('Signin error:', error);
@@ -107,87 +102,49 @@ const signin = async (req, res) => {
   }
 };
 
-// Logout controller
 const logout = async (req, res) => {
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
+  res.clearCookie('token');
+  return res.status(200).json({ message: 'Logged out successfully.' });
+};
+
+const check = async (req, res) => {
   try {
-    res.clearCookie('refreshToken', {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    return res.status(200).json({ message: 'User is authenticated.', user: publicUser(user) });
+  } catch (error) {
+    console.error('Auth check error:', error);
+    return res.status(500).json({ message: 'Failed to check authentication.' });
+  }
+};
+
+const refreshToken = async (req, res) => {
+  const token = req.cookies.refreshToken;
+  if (!token) return res.status(401).json({ message: 'No refresh token provided.' });
+
+  try {
+    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    if (!user) return res.status(401).json({ message: 'User not found.' });
+
+    const { accessToken, refreshToken: rotatedRefreshToken } = generateTokens(user.id, user.email);
+    res.cookie('refreshToken', rotatedRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    res.clearCookie('token');
-    return res.status(200).json({ message: 'Logged out successfully.' });
+
+    return res.status(200).json({ message: 'Token refreshed successfully.', accessToken });
   } catch (error) {
-    console.error('Logout error:', error);
-    return res.status(500).json({ message: 'Error logging out.' });
-  }
-};
-
-// Check token validity
-const check = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
-    }
-    res.status(200).json({ message: 'User is authenticated.', user });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to check authentication.' });
-  }
-};
-
-// Refresh access token
-const refreshToken = async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
-
-  if (!refreshToken) {
-    return res.status(401).json({ message: 'No refresh token provided.' });
-  }
-
-  try {
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-    const { accessToken } = generateTokens(decoded.userId, decoded.email);
-
-    res.status(200).json({ message: 'Token refreshed successfully.', accessToken });
-  } catch (error) {
-    res.status(403).json({ message: 'Refresh token is invalid or expired.' });
-  }
-};
-
-// Get User Preferences
-const getPreferences = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ error: 'User not found.' });
-    res.status(200).json(user.preferences || defaultPreferences);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch preferences.' });
-  }
-};
-
-// Update User Preferences
-const updatePreferences = async (req, res) => {
-  try {
-    const { budgetMonth, alertPercent } = req.body;
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ error: 'User not found.' });
-
-    if (budgetMonth !== undefined && !/^\d{4}-(0[1-9]|1[0-2])$/.test(budgetMonth)) {
-      return res.status(400).json({ error: 'budgetMonth must use YYYY-MM format.' });
-    }
-    if (alertPercent !== undefined && (!Number.isFinite(Number(alertPercent)) || Number(alertPercent) < 0 || Number(alertPercent) > 100)) {
-      return res.status(400).json({ error: 'alertPercent must be between 0 and 100.' });
-    }
-
-    user.preferences = user.preferences || { ...defaultPreferences };
-    if (budgetMonth !== undefined) user.preferences.budgetMonth = budgetMonth;
-    if (alertPercent !== undefined) user.preferences.alertPercent = Number(alertPercent);
-
-    await user.save();
-    res.status(200).json(user.preferences);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update preferences.' });
+    return res.status(403).json({ message: 'Refresh token is invalid or expired.' });
   }
 };
 
@@ -197,6 +154,4 @@ module.exports = {
   logout,
   check,
   refreshToken,
-  getPreferences,
-  updatePreferences,
 };
