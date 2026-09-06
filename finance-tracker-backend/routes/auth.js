@@ -6,6 +6,9 @@ const {
   logout,
   check,
   refreshToken,
+  getAccount,
+  updateAccount,
+  changePassword,
   getPreferences,
   updatePreferences,
 } = require('../controllers/authController');
@@ -27,10 +30,10 @@ router.post('/signin', authLimiter, signin);
 router.post('/logout', logout);
 router.get('/check', authenticateToken, check);
 router.post('/refresh-token', refreshToken);
+router.get('/account', authenticateToken, getAccount);
+router.patch('/account', authenticateToken, updateAccount);
+router.post('/account/password', authenticateToken, changePassword);
 router.get('/preferences', authenticateToken, getPreferences);
 router.put('/preferences', authenticateToken, updatePreferences);
 
 module.exports = router;
-
-
-
