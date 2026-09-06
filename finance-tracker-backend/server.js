@@ -11,6 +11,9 @@ const expensesRoutes = require('./routes/expenseAuth');
 const budgetRoutes = require('./routes/budgetAuth');
 const newsRoutes = require('./routes/news');
 const healthRoutes = require('./routes/health');
+const accountRoutes = require('./routes/accounts');
+const categoryRoutes = require('./routes/categories');
+const transactionRoutes = require('./routes/transactions');
 const prisma = require('./config/prisma');
 
 const app = express();
@@ -18,7 +21,7 @@ const app = express();
 const corsOptions = {
   origin: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
 };
 
@@ -33,6 +36,9 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expensesRoutes);
 app.use('/api/budgets', budgetRoutes);
+app.use('/api/accounts', accountRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/transactions', transactionRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/health', healthRoutes);
 
