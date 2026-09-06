@@ -14,6 +14,7 @@ const healthRoutes = require('./routes/health');
 const accountRoutes = require('./routes/accounts');
 const categoryRoutes = require('./routes/categories');
 const transactionRoutes = require('./routes/transactions');
+const debtRoutes = require('./routes/debts');
 const prisma = require('./config/prisma');
 
 const app = express();
@@ -36,6 +37,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/debts', debtRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/health', healthRoutes);
 
