@@ -8,6 +8,8 @@ const normalizeDate = (value, fieldName) => {
   return date;
 };
 
+const currentDateString = () => new Date().toISOString().slice(0, 10);
+
 const normalizeAmount = (value, fieldName = 'Amount') => {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) throw new Error(`${fieldName} must be a positive number.`);
@@ -37,9 +39,8 @@ const serialize = (goal) => {
   const remainingAmount = Math.max(targetAmount - currentSaved, 0);
   const progressPercent = targetAmount > 0 ? Math.min((currentSaved / targetAmount) * 100, 100) : 0;
   const completed = currentSaved >= targetAmount;
-  const today = new Date();
   const targetDate = goal.targetDate ? goal.targetDate.toISOString().slice(0, 10) : null;
-  const overdue = Boolean(targetDate && !completed && new Date(`${targetDate}T23:59:59.999Z`) < today);
+  const overdue = Boolean(targetDate && !completed && targetDate < currentDateString());
   return {
     id: goal.id,
     name: goal.name,
@@ -72,14 +73,8 @@ const savingsGoalService = {
     const name = normalizeName(input.name);
     const targetAmount = normalizeAmount(input.targetAmount, 'Target amount');
     const targetDate = normalizeDate(input.targetDate, 'Target date');
-    if (targetDate && targetDate < new Date(new Date().toISOString().slice(0, 10))) throw new Error('Target date cannot be in the past.');
-    const goal = await savingsGoalRepository.create({
-      userId,
-      name,
-      targetAmount,
-      targetDate,
-      description: normalizeDescription(input.description),
-    });
+    if (targetDate && targetDate.toISOString().slice(0, 10) < currentDateString()) throw new Error('Target date cannot be in the past.');
+    const goal = await savingsGoalRepository.create({ userId, name, targetAmount, targetDate, description: normalizeDescription(input.description) });
     return serialize(goal);
   },
 
@@ -89,7 +84,7 @@ const savingsGoalService = {
     const name = input.name !== undefined ? normalizeName(input.name) : existing.name;
     const targetAmount = input.targetAmount !== undefined ? normalizeAmount(input.targetAmount, 'Target amount') : existing.targetAmount.toString();
     const targetDate = input.targetDate !== undefined ? normalizeDate(input.targetDate, 'Target date') : existing.targetDate;
-    if (targetDate && targetDate < new Date(new Date().toISOString().slice(0, 10))) throw new Error('Target date cannot be in the past.');
+    if (targetDate && targetDate.toISOString().slice(0, 10) < currentDateString()) throw new Error('Target date cannot be in the past.');
     const currentSaved = (existing.contributions || []).reduce((sum, item) => sum + Number(item.amount), 0);
     if (Number(targetAmount) < currentSaved) throw new Error('Target amount cannot be less than the amount already saved.');
     const goal = await savingsGoalRepository.updateByIdForUser(id, userId, {
@@ -111,8 +106,8 @@ const savingsGoalService = {
     const goal = await savingsGoalRepository.findByIdForUser(goalId, userId);
     if (!goal || !goal.isActive) return null;
     const amount = normalizeAmount(input.amount, 'Contribution amount');
-    const contributionDate = normalizeDate(input.contributionDate, 'Contribution date') || new Date(new Date().toISOString().slice(0, 10));
-    if (contributionDate > new Date(new Date().toISOString().slice(0, 10))) throw new Error('Contribution date cannot be in the future.');
+    const contributionDate = normalizeDate(input.contributionDate, 'Contribution date') || normalizeDate(currentDateString(), 'Contribution date');
+    if (contributionDate.toISOString().slice(0, 10) > currentDateString()) throw new Error('Contribution date cannot be in the future.');
     const currentSaved = (goal.contributions || []).reduce((sum, item) => sum + Number(item.amount), 0);
     if (currentSaved + Number(amount) > Number(goal.targetAmount)) throw new Error('Contribution would exceed the target amount.');
     const note = input.note === undefined || input.note === null || input.note === '' ? null : String(input.note).trim();
