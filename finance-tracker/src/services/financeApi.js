@@ -7,6 +7,11 @@ const financeApi = {
     create: (data) => api.post('/accounts', data),
     update: (id, data) => api.patch(`/accounts/${id}`, data),
   },
+  userAccount: {
+    get: () => api.get('/auth/account'),
+    update: (data) => api.patch('/auth/account', data),
+    changePassword: (data) => api.post('/auth/account/password', data),
+  },
   categories: {
     list: (type) => api.get('/categories', { params: type ? { type } : undefined }),
     create: (data) => api.post('/categories', data),
