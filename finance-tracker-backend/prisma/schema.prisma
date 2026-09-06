@@ -189,13 +189,13 @@ model SavingsGoal {
 }
 
 model SavingsGoalContribution {
-  id             String   @id @default(uuid()) @db.Uuid
-  goalId         String   @map("goal_id") @db.Uuid
-  userId         String   @map("user_id") @db.Uuid
-  amount         Decimal  @db.Decimal(14, 2)
+  id               String   @id @default(uuid()) @db.Uuid
+  goalId           String   @map("goal_id") @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  amount           Decimal  @db.Decimal(14, 2)
   contributionDate DateTime @map("contribution_date") @db.Date
-  note           String?  @db.VarChar(255)
-  createdAt      DateTime @default(now()) @db.Date
+  note             String?  @db.VarChar(255)
+  createdAt        DateTime @default(now()) @map("created_at")
 
   goal SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
   user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
