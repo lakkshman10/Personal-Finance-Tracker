@@ -10,6 +10,8 @@ const authRoutes = require('./routes/auth');
 const expensesRoutes = require('./routes/expenseAuth');
 const budgetRoutes = require('./routes/budgetAuth');
 const newsRoutes = require('./routes/news');
+const healthRoutes = require('./routes/health');
+const prisma = require('./config/prisma');
 
 const app = express();
 
@@ -32,6 +34,25 @@ app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expensesRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/news', newsRoutes);
+app.use('/api/health', healthRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+const shutdown = async (signal) => {
+  console.log(`${signal} received. Shutting down gracefully...`);
+
+  server.close(async () => {
+    try {
+      await prisma.$disconnect();
+      console.log('PostgreSQL disconnected.');
+      process.exit(0);
+    } catch (error) {
+      console.error('Error during PostgreSQL shutdown:', error.message);
+      process.exit(1);
+    }
+  });
+};
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
