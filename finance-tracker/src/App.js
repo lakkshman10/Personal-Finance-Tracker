@@ -20,6 +20,7 @@ import SavingsGoals from './pages/SavingsGoals';
 import IncomeTracking from './pages/IncomeTracking';
 import ReportsInsights from './pages/ReportsInsights';
 import Accounts from './pages/Accounts';
+import Account from './pages/Account';
 
 function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -86,6 +87,7 @@ function MainContent({ isSidebarCollapsed, toggleSidebar }) {
             <Route path="/income-tracking" element={<ProtectedRoute element={IncomeTracking} />} />
             <Route path="/reports-insights" element={<ProtectedRoute element={ReportsInsights} />} />
             <Route path="/accounts" element={<ProtectedRoute element={Accounts} />} />
+            <Route path="/account" element={<ProtectedRoute element={Account} />} />
           </Routes>
         </div>
       </div>
