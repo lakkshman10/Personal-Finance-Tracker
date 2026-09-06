@@ -1,55 +1,33 @@
 const prisma = require('../config/prisma');
 
+const budgetInclude = {
+  category: true,
+  adjustments: { orderBy: { createdAt: 'asc' } },
+};
+
 const budgetRepository = {
   async findByUserId(userId, options = {}) {
     const { month } = options;
-
     return prisma.budget.findMany({
-      where: {
-        userId,
-        ...(month ? { month } : {}),
-      },
+      where: { userId, ...(month ? { month } : {}) },
       orderBy: [{ month: 'desc' }, { createdAt: 'desc' }],
-      include: {
-        category: true,
-        adjustments: {
-          orderBy: { createdAt: 'asc' },
-        },
-      },
+      include: budgetInclude,
     });
   },
-
   async findByIdForUser(id, userId) {
-    return prisma.budget.findFirst({
-      where: { id, userId },
-      include: {
-        category: true,
-        adjustments: {
-          orderBy: { createdAt: 'asc' },
-        },
-      },
-    });
+    return prisma.budget.findFirst({ where: { id, userId }, include: budgetInclude });
   },
-
   async create(data) {
-    return prisma.budget.create({
-      data,
-      include: { category: true, adjustments: true },
-    });
+    return prisma.budget.create({ data, include: budgetInclude });
   },
-
   async updateByIdForUser(id, userId, data) {
-    const result = await prisma.budget.updateMany({
-      where: { id, userId },
-      data,
-    });
-
+    const result = await prisma.budget.updateMany({ where: { id, userId }, data });
     if (result.count === 0) return null;
     return budgetRepository.findByIdForUser(id, userId);
   },
-
-  async createAdjustment(data) {
-    return prisma.budgetAdjustment.create({ data });
+  async deleteByIdForUser(id, userId) {
+    const result = await prisma.budget.deleteMany({ where: { id, userId } });
+    return result.count > 0;
   },
 };
 
