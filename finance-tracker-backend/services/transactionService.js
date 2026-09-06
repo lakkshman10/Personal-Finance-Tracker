@@ -12,12 +12,12 @@ const normalizeAmount = (amount) => {
 };
 
 const normalizeDate = (value) => {
-  if (!value) {
-    throw new Error('Transaction date is required.');
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error('Transaction date is required and must use YYYY-MM-DD.');
   }
 
   const date = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
     throw new Error('Invalid transaction date.');
   }
 
@@ -35,10 +35,18 @@ const transactionService = {
     return transactionRepository.findByUserId(userId, options);
   },
 
-  async create(userId, input) {
-    const { accountId, categoryId = null, type, amount, description = '', notes = null, transactionDate } = input;
+  async create(userId, input = {}) {
+    const {
+      accountId,
+      categoryId = null,
+      type,
+      amount,
+      description,
+      notes = null,
+      transactionDate,
+    } = input;
 
-    if (!accountId || !type || !description.trim()) {
+    if (!accountId || !type || typeof description !== 'string' || !description.trim() || !transactionDate) {
       throw new Error('Account, type, description, and transaction date are required.');
     }
 
