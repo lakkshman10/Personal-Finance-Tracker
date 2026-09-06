@@ -54,6 +54,7 @@ function MainContent({ isSidebarCollapsed, toggleSidebar }) {
     '/income-tracking',
     '/reports-insights',
     '/accounts',
+    '/account',
   ];
 
   const showSidebar = routesWithSidebar.includes(location.pathname);
@@ -86,6 +87,7 @@ function MainContent({ isSidebarCollapsed, toggleSidebar }) {
             <Route path="/income-tracking" element={<ProtectedRoute element={IncomeTracking} />} />
             <Route path="/reports-insights" element={<ProtectedRoute element={ReportsInsights} />} />
             <Route path="/accounts" element={<ProtectedRoute element={Accounts} />} />
+            <Route path="/account" element={<ProtectedRoute element={Accounts} />} />
           </Routes>
         </div>
       </div>
