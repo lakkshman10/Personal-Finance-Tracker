@@ -40,7 +40,7 @@ const categoryService = {
     });
   },
 
-  async update(userId, id, input) {
+  async update(userId, id, input = {}) {
     const existing = await categoryRepository.findOwnedById(id, userId);
     if (!existing) return null;
 
