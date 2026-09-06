@@ -1,9 +1,9 @@
 const express = require('express');
-const authenticateToken = require('../middleware/authenticateToken');
+const authenticateFinanceUser = require('../middlewares/financeAuthMiddleware');
 const budgetService = require('../services/budgetService');
 
 const router = express.Router();
-router.use(authenticateToken);
+router.use(authenticateFinanceUser);
 
 router.get('/', async (req, res) => {
   try {
@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const budget = await budgetService.create(req.user.id, req.body);
+    const budget = await budgetService.create(req.user.id, req.body || {});
     return res.status(201).json(budget);
   } catch (error) {
     if (error.code === 'P2002') {
@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
 
 router.patch('/:id', async (req, res) => {
   try {
-    const budget = await budgetService.update(req.user.id, req.params.id, req.body);
+    const budget = await budgetService.update(req.user.id, req.params.id, req.body || {});
     if (!budget) return res.status(404).json({ message: 'Budget not found.' });
     return res.json(budget);
   } catch (error) {
