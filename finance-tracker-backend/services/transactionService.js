@@ -100,6 +100,11 @@ const transactionService = {
     const existing = await transactionRepository.findByIdForUser(id, userId);
     if (!existing) return null;
 
+    const debtPayment = await transactionRepository.findDebtPaymentByTransactionIdForUser(id, userId);
+    if (debtPayment) {
+      throw new Error('Debt payment transactions must be changed through Debt Management.');
+    }
+
     if (existing.type === 'TRANSFER' || input.type === 'TRANSFER') {
       if (existing.type !== 'TRANSFER') throw new Error('Changing an income or expense into a transfer is not supported. Delete it and create a transfer instead.');
       if (!existing.transferGroupId || !existing.transferDirection) throw new Error('This legacy transfer cannot be edited safely. Delete it and create a new transfer.');
@@ -145,6 +150,11 @@ const transactionService = {
   async remove(userId, id) {
     const existing = await transactionRepository.findByIdForUser(id, userId);
     if (!existing) return false;
+
+    const debtPayment = await transactionRepository.findDebtPaymentByTransactionIdForUser(id, userId);
+    if (debtPayment) {
+      throw new Error('Debt payment transactions must be removed through Debt Management.');
+    }
 
     if (existing.type === 'TRANSFER') {
       if (!existing.transferGroupId || !existing.transferDirection) throw new Error('This legacy transfer cannot be deleted safely.');
