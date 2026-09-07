@@ -1,37 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { Navigate } from 'react-router-dom';
-import api from '../services/api';
+import { setToken, setUser } from '../redux/actions';
+import api, { setAccessToken } from '../services/api';
 
 const ProtectedRoute = ({ element: Component }) => {
-  const token = useSelector((state) => state.auth?.token) || localStorage.getItem('token');
-  const [isValid, setIsValid] = useState(false);
-  const [loading, setLoading] = useState(true);
-
+  const [isValid, setIsValid] = useState(false); const [loading, setLoading] = useState(true); const dispatch = useDispatch();
   useEffect(() => {
-    const validateToken = async () => {
-      if (!token) {
-        setIsValid(false);
-        setLoading(false);
-        return;
-      }
-
+    let mounted = true;
+    const restoreSession = async () => {
       try {
-        await api.get('/auth/check');
-        setIsValid(true);
+        const refreshResponse = await api.post('/auth/refresh-token'); const token = refreshResponse.data?.accessToken;
+        if (!token) throw new Error('No access token returned.');
+        setAccessToken(token); dispatch(setToken(token));
+        const checkResponse = await api.get('/auth/check'); dispatch(setUser(checkResponse.data.user));
+        if (mounted) setIsValid(true);
       } catch {
-        setIsValid(false);
-      } finally {
-        setLoading(false);
-      }
+        setAccessToken(null); dispatch(setToken(null)); dispatch(setUser(null)); localStorage.removeItem('user');
+        if (mounted) setIsValid(false);
+      } finally { if (mounted) setLoading(false); }
     };
-
-    validateToken();
-  }, [token]);
-
+    restoreSession();
+    return () => { mounted = false; };
+  }, [dispatch]);
   if (loading) return <div>Loading...</div>;
-  if (!isValid) return <Navigate to="/signin" />;
+  if (!isValid) return <Navigate to="/signin" replace />;
   return <Component />;
 };
-
 export default ProtectedRoute;
