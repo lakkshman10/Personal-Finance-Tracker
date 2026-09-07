@@ -1,36 +1,18 @@
 const express = require('express');
 const authenticateToken = require('../middlewares/authMiddleware');
 const accountService = require('../services/accountService');
+const AppError = require('../utils/AppError');
 
 const router = express.Router();
 router.use(authenticateToken);
 
-router.get('/', async (req, res) => {
-  try {
-    const accounts = await accountService.list(req.user.id, { activeOnly: req.query.activeOnly === 'true' });
-    res.json(accounts);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+router.get('/', async (req, res, next) => {
+  try { return res.json(await accountService.list(req.user.id, { activeOnly: req.query.activeOnly === 'true' })); } catch (error) { return next(error); }
 });
-
-router.post('/', async (req, res) => {
-  try {
-    const account = await accountService.create(req.user.id, req.body);
-    res.status(201).json(account);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
+router.post('/', async (req, res, next) => {
+  try { return res.status(201).json(await accountService.create(req.user.id, req.body)); } catch (error) { return next(error); }
 });
-
-router.patch('/:id', async (req, res) => {
-  try {
-    const account = await accountService.update(req.user.id, req.params.id, req.body || {});
-    if (!account) return res.status(404).json({ message: 'Account not found.' });
-    return res.json(account);
-  } catch (error) {
-    return res.status(400).json({ message: error.message });
-  }
+router.patch('/:id', async (req, res, next) => {
+  try { const account = await accountService.update(req.user.id, req.params.id, req.body || {}); if (!account) return next(new AppError('Account not found.', 404)); return res.json(account); } catch (error) { return next(error); }
 });
-
 module.exports = router;
