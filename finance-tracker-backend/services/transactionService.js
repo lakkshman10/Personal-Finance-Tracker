@@ -7,17 +7,14 @@ const ALLOWED_TYPES = new Set(['INCOME', 'EXPENSE', 'TRANSFER']);
 const normalizeAmount = (amount) => {
   const value = Number(amount);
   if (!Number.isFinite(value) || value <= 0) throw new Error('Amount must be a positive number.');
+  if (value > 999999999999.99) throw new Error('Amount is too large.');
   return value.toFixed(2);
 };
 
 const normalizeDate = (value) => {
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new Error('Transaction date must use YYYY-MM-DD format.');
-  }
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('Transaction date must use YYYY-MM-DD format.');
   const date = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
-    throw new Error('Invalid transaction date.');
-  }
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) throw new Error('Invalid transaction date.');
   return date;
 };
 
@@ -27,6 +24,8 @@ const normalizeDescription = (value) => {
   if (description.length > 255) throw new Error('Description must be 255 characters or fewer.');
   return description;
 };
+
+const normalizeNotes = (value) => value === null || value === undefined ? null : String(value).trim() || null;
 
 const validateType = (type) => {
   if (!ALLOWED_TYPES.has(type)) throw new Error('Invalid transaction type.');
@@ -54,27 +53,46 @@ const transactionService = {
     if (normalized.type !== undefined) validateType(normalized.type);
     if (normalized.fromDate) normalized.fromDate = normalizeDate(normalized.fromDate);
     if (normalized.toDate) normalized.toDate = normalizeDate(normalized.toDate);
-    if (normalized.fromDate && normalized.toDate && normalized.fromDate > normalized.toDate) {
-      throw new Error('fromDate cannot be after toDate.');
-    }
+    if (normalized.fromDate && normalized.toDate && normalized.fromDate > normalized.toDate) throw new Error('fromDate cannot be after toDate.');
     return transactionRepository.findByUserId(userId, normalized);
   },
 
   async create(userId, input = {}) {
-    const { accountId, categoryId = null, type, amount, description, notes = null, transactionDate } = input;
+    const { accountId, destinationAccountId = null, categoryId = null, type, amount, description, notes = null, transactionDate } = input;
     if (!accountId || !type) throw new Error('Account and transaction type are required.');
     validateType(type);
+
+    const normalizedAmount = normalizeAmount(amount);
+    const normalizedDescription = normalizeDescription(description);
+    const normalizedDate = normalizeDate(transactionDate);
+    const normalizedNotes = normalizeNotes(notes);
+
+    if (type === 'TRANSFER') {
+      if (categoryId) throw new Error('Transfers cannot have a category.');
+      if (!destinationAccountId) throw new Error('Destination account is required for transfers.');
+      return transactionRepository.createTransfer({
+        userId,
+        sourceAccountId: accountId,
+        destinationAccountId,
+        amount: normalizedAmount,
+        description: normalizedDescription,
+        transactionDate: normalizedDate,
+        notes: normalizedNotes,
+      });
+    }
+
+    if (destinationAccountId) throw new Error('Destination account is only valid for transfers.');
     await validateReferences(userId, accountId, categoryId, type);
 
     return transactionRepository.create({
       userId,
       accountId,
-      categoryId: type === 'TRANSFER' ? null : categoryId,
+      categoryId,
       type,
-      amount: normalizeAmount(amount),
-      description: normalizeDescription(description),
-      transactionDate: normalizeDate(transactionDate),
-      notes: notes === null || notes === undefined ? null : String(notes).trim() || null,
+      amount: normalizedAmount,
+      description: normalizedDescription,
+      transactionDate: normalizedDate,
+      notes: normalizedNotes,
     });
   },
 
@@ -82,6 +100,29 @@ const transactionService = {
     const existing = await transactionRepository.findByIdForUser(id, userId);
     if (!existing) return null;
 
+    if (existing.type === 'TRANSFER' || input.type === 'TRANSFER') {
+      if (existing.type !== 'TRANSFER') throw new Error('Changing an income or expense into a transfer is not supported. Delete it and create a transfer instead.');
+      if (!existing.transferGroupId || !existing.transferDirection) throw new Error('This legacy transfer cannot be edited safely. Delete it and create a new transfer.');
+      if (input.type !== undefined && input.type !== 'TRANSFER') throw new Error('A transfer cannot be changed into an income or expense transaction. Delete it and create a new transaction.');
+      if (input.categoryId) throw new Error('Transfers cannot have a category.');
+
+      const sourceAccountId = input.accountId ?? existing.accountId;
+      const destination = await transactionRepository.findTransferGroupForUser(existing.transferGroupId, userId);
+      const incoming = destination.find((row) => row.transferDirection === 'IN');
+      const destinationAccountId = input.destinationAccountId ?? incoming?.accountId;
+      if (!destinationAccountId) throw new Error('Destination account is required for transfers.');
+
+      return transactionRepository.updateTransferGroupForUser(existing.transferGroupId, userId, {
+        sourceAccountId,
+        destinationAccountId,
+        amount: input.amount !== undefined ? normalizeAmount(input.amount) : existing.amount,
+        description: input.description !== undefined ? normalizeDescription(input.description) : existing.description,
+        transactionDate: input.transactionDate !== undefined ? normalizeDate(input.transactionDate) : existing.transactionDate,
+        notes: input.notes !== undefined ? normalizeNotes(input.notes) : existing.notes,
+      });
+    }
+
+    if (input.destinationAccountId) throw new Error('Destination account is only valid for transfers.');
     const nextType = input.type ?? existing.type;
     const nextAccountId = input.accountId ?? existing.accountId;
     const nextCategoryId = input.categoryId !== undefined ? input.categoryId : existing.categoryId;
@@ -90,20 +131,27 @@ const transactionService = {
 
     const data = {};
     if (input.accountId !== undefined) data.accountId = input.accountId;
-    if (input.categoryId !== undefined || input.type !== undefined) {
-      data.categoryId = nextType === 'TRANSFER' ? null : nextCategoryId;
-    }
+    if (input.categoryId !== undefined || input.type !== undefined) data.categoryId = nextCategoryId;
     if (input.type !== undefined) data.type = nextType;
     if (input.amount !== undefined) data.amount = normalizeAmount(input.amount);
     if (input.description !== undefined) data.description = normalizeDescription(input.description);
     if (input.transactionDate !== undefined) data.transactionDate = normalizeDate(input.transactionDate);
-    if (input.notes !== undefined) data.notes = input.notes === null ? null : String(input.notes).trim() || null;
+    if (input.notes !== undefined) data.notes = normalizeNotes(input.notes);
 
     if (Object.keys(data).length === 0) throw new Error('No valid transaction fields to update.');
     return transactionRepository.updateByIdForUser(id, userId, data);
   },
 
   async remove(userId, id) {
+    const existing = await transactionRepository.findByIdForUser(id, userId);
+    if (!existing) return false;
+
+    if (existing.type === 'TRANSFER') {
+      if (!existing.transferGroupId || !existing.transferDirection) throw new Error('This legacy transfer cannot be deleted safely.');
+      const deletedCount = await transactionRepository.deleteTransferGroupForUser(existing.transferGroupId, userId);
+      return deletedCount === 2;
+    }
+
     return transactionRepository.deleteByIdForUser(id, userId);
   },
 };
