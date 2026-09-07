@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { setToken, setUser } from './redux/actions';
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+import api, { setAccessToken } from './services/api';
 import Home from './pages/Home';
 import FinanceAssistant from './pages/FinanceAssistant';
 import News from './pages/News';
@@ -23,6 +26,38 @@ import DebtManagement from './pages/DebtManagement';
 
 function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [authInitializing, setAuthInitializing] = useState(true);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    let mounted = true;
+
+    const restoreSession = async () => {
+      try {
+        const refreshResponse = await api.post('/auth/refresh-token');
+        const accessToken = refreshResponse.data?.accessToken;
+        if (!accessToken) throw new Error('No access token returned.');
+
+        setAccessToken(accessToken);
+        dispatch(setToken(accessToken));
+
+        const checkResponse = await api.get('/auth/check');
+        dispatch(setUser(checkResponse.data.user));
+      } catch {
+        setAccessToken(null);
+        dispatch(setToken(null));
+        dispatch(setUser(null));
+        localStorage.removeItem('user');
+      } finally {
+        if (mounted) setAuthInitializing(false);
+      }
+    };
+
+    restoreSession();
+    return () => { mounted = false; };
+  }, [dispatch]);
+
+  if (authInitializing) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
 
   return (
     <Router>
