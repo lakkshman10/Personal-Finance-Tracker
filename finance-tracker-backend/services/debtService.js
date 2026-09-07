@@ -7,6 +7,7 @@ const normalizeMoney = (value, field, { allowZero = false } = {}) => {
   if (!Number.isFinite(number) || (allowZero ? number < 0 : number <= 0)) {
     throw new Error(`${field} must be ${allowZero ? 'zero or a positive number' : 'a positive number'}.`);
   }
+  if (number > 999999999999.99) throw new Error(`${field} is too large.`);
   return number.toFixed(2);
 };
 
@@ -107,6 +108,10 @@ const debtService = {
 
     if (input.principalAmount !== undefined) {
       const principal = Number(normalizeMoney(input.principalAmount, 'Principal amount'));
+      const hasPaymentHistory = Array.isArray(existing.payments) && existing.payments.length > 0;
+      if (hasPaymentHistory) {
+        throw new Error('Principal amount cannot be changed after payments have been recorded. Reverse the payment history first.');
+      }
       if (principal < Number(existing.outstandingAmount)) {
         throw new Error('Principal amount cannot be below the outstanding amount.');
       }
