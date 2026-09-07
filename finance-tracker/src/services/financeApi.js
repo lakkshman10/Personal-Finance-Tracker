@@ -38,9 +38,11 @@ const financeApi = {
     removeContribution: (contributionId) => api.delete(`/savings-goals/contributions/${contributionId}`),
   },
   debts: {
-    list: () => api.get('/debts'),
+    list: (status = 'ACTIVE') => api.get('/debts', { params: { status } }),
     create: (data) => api.post('/debts', data),
     update: (id, data) => api.patch(`/debts/${id}`, data),
+    archive: (id) => api.post(`/debts/${id}/archive`),
+    restore: (id) => api.post(`/debts/${id}/restore`),
     remove: (id) => api.delete(`/debts/${id}`),
     addPayment: (id, data) => api.post(`/debts/${id}/payments`, data),
     removePayment: (id, paymentId) => api.delete(`/debts/${id}/payments/${paymentId}`),
