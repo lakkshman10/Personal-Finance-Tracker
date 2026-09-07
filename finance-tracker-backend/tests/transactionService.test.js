@@ -22,48 +22,28 @@ test('creates a transfer through the atomic transfer repository operation', asyn
   });
 
   const result = await service.create('user-1', {
-    accountId: 'account-a',
-    destinationAccountId: 'account-b',
-    type: 'TRANSFER',
-    amount: '1000.50',
-    description: 'Move money',
-    transactionDate: '2026-09-07',
+    accountId: 'account-a', destinationAccountId: 'account-b', type: 'TRANSFER', amount: '1000.50', description: 'Move money', transactionDate: '2026-09-07',
   });
 
   assert.equal(result.length, 2);
   assert.deepEqual(payload, {
-    userId: 'user-1',
-    sourceAccountId: 'account-a',
-    destinationAccountId: 'account-b',
-    amount: '1000.50',
-    description: 'Move money',
-    transactionDate: new Date('2026-09-07T00:00:00.000Z'),
-    notes: null,
+    userId: 'user-1', sourceAccountId: 'account-a', destinationAccountId: 'account-b', amount: '1000.50', description: 'Move money', transactionDate: new Date('2026-09-07T00:00:00.000Z'), notes: null,
   });
 });
 
 test('rejects transfers without a destination account', async () => {
   const service = loadService({ repository: { createTransfer: async () => { throw new Error('should not run'); } } });
-  await assert.rejects(
-    service.create('user-1', { accountId: 'account-a', type: 'TRANSFER', amount: 100, description: 'Move', transactionDate: '2026-09-07' }),
-    /Destination account is required/
-  );
+  await assert.rejects(service.create('user-1', { accountId: 'account-a', type: 'TRANSFER', amount: 100, description: 'Move', transactionDate: '2026-09-07' }), /Destination account is required/);
 });
 
 test('rejects categories on transfers', async () => {
   const service = loadService({ repository: { createTransfer: async () => { throw new Error('should not run'); } } });
-  await assert.rejects(
-    service.create('user-1', { accountId: 'account-a', destinationAccountId: 'account-b', categoryId: 'category-1', type: 'TRANSFER', amount: 100, description: 'Move', transactionDate: '2026-09-07' }),
-    /Transfers cannot have a category/
-  );
+  await assert.rejects(service.create('user-1', { accountId: 'account-a', destinationAccountId: 'account-b', categoryId: 'category-1', type: 'TRANSFER', amount: 100, description: 'Move', transactionDate: '2026-09-07' }), /Transfers cannot have a category/);
 });
 
 test('rejects destinationAccountId on income and expense transactions', async () => {
   const service = loadService({ repository: { create: async () => ({}) } });
-  await assert.rejects(
-    service.create('user-1', { accountId: 'account-a', destinationAccountId: 'account-b', categoryId: 'category-1', type: 'EXPENSE', amount: 100, description: 'Expense', transactionDate: '2026-09-07' }),
-    /Destination account is only valid for transfers/
-  );
+  await assert.rejects(service.create('user-1', { accountId: 'account-a', destinationAccountId: 'account-b', categoryId: 'category-1', type: 'EXPENSE', amount: 100, description: 'Expense', transactionDate: '2026-09-07' }), /Destination account is only valid for transfers/);
 });
 
 test('rejects zero, negative and non-finite amounts', async () => {
@@ -76,28 +56,34 @@ test('rejects zero, negative and non-finite amounts', async () => {
 
 test('removes both sides of a valid transfer as one repository operation', async () => {
   let groupDeleted;
-  const service = loadService({
-    repository: {
-      findByIdForUser: async () => ({ id: 'tx-out', type: 'TRANSFER', transferGroupId: 'group-1', transferDirection: 'OUT' }),
-      deleteTransferGroupForUser: async (groupId, userId) => { groupDeleted = { groupId, userId }; return 2; },
-    },
-  });
+  const service = loadService({ repository: {
+    findByIdForUser: async () => ({ id: 'tx-out', type: 'TRANSFER', transferGroupId: 'group-1', transferDirection: 'OUT' }),
+    findDebtPaymentByTransactionIdForUser: async () => null,
+    deleteTransferGroupForUser: async (groupId, userId) => { groupDeleted = { groupId, userId }; return 2; },
+  } });
 
   assert.equal(await service.remove('user-1', 'tx-out'), true);
   assert.deepEqual(groupDeleted, { groupId: 'group-1', userId: 'user-1' });
 });
 
 test('refuses to mutate legacy one-sided transfers', async () => {
-  const service = loadService({
-    repository: { findByIdForUser: async () => ({ id: 'legacy', type: 'TRANSFER', transferGroupId: null, transferDirection: null }) },
-  });
+  const service = loadService({ repository: { findByIdForUser: async () => ({ id: 'legacy', type: 'TRANSFER', transferGroupId: null, transferDirection: null }) } });
+  await assert.rejects(service.update('user-1', 'legacy', { amount: 200 }), /legacy transfer cannot be edited safely/);
+  await assert.rejects(service.remove('user-1', 'legacy'), /legacy transfer cannot be deleted safely/);
+});
 
-  await assert.rejects(
-    service.update('user-1', 'legacy', { amount: 200 }),
-    /legacy transfer cannot be edited safely/
-  );
-  await assert.rejects(
-    service.remove('user-1', 'legacy'),
-    /legacy transfer cannot be deleted safely/
-  );
+test('rejects direct updates to debt-payment transactions', async () => {
+  const service = loadService({ repository: {
+    findByIdForUser: async () => ({ id: 'debt-tx', type: 'EXPENSE', accountId: 'account-a', categoryId: 'category-1' }),
+    findDebtPaymentByTransactionIdForUser: async () => ({ id: 'payment-1', debtId: 'debt-1', transactionId: 'debt-tx' }),
+  } });
+  await assert.rejects(service.update('user-1', 'debt-tx', { amount: 50 }), /must be changed through Debt Management/);
+});
+
+test('rejects direct deletion of debt-payment transactions', async () => {
+  const service = loadService({ repository: {
+    findByIdForUser: async () => ({ id: 'debt-tx', type: 'EXPENSE' }),
+    findDebtPaymentByTransactionIdForUser: async () => ({ id: 'payment-1', debtId: 'debt-1', transactionId: 'debt-tx' }),
+  } });
+  await assert.rejects(service.remove('user-1', 'debt-tx'), /must be removed through Debt Management/);
 });
