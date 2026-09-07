@@ -46,25 +46,19 @@ const validateName = (name) => {
 const validateDueDay = (value) => {
   if (value === null || value === undefined || value === '') return null;
   const day = Number(value);
-  if (!Number.isInteger(day) || day < 1 || day > 31) {
-    throw new Error('Due day must be between 1 and 31.');
-  }
+  if (!Number.isInteger(day) || day < 1 || day > 31) throw new Error('Due day must be between 1 and 31.');
   return day;
 };
 
 const validateInterest = (value) => {
   if (value === null || value === undefined || value === '') return '0.0000';
   const rate = Number(value);
-  if (!Number.isFinite(rate) || rate < 0 || rate > 100) {
-    throw new Error('Interest rate must be between 0 and 100 percent.');
-  }
+  if (!Number.isFinite(rate) || rate < 0 || rate > 100) throw new Error('Interest rate must be between 0 and 100 percent.');
   return rate.toFixed(4);
 };
 
 const validateMinimumPayment = (value) => (
-  value === null || value === undefined || value === ''
-    ? null
-    : normalizeMoney(value, 'Minimum payment')
+  value === null || value === undefined || value === '' ? null : normalizeMoney(value, 'Minimum payment')
 );
 
 const debtService = {
@@ -78,10 +72,7 @@ const debtService = {
     const outstandingAmount = input.outstandingAmount === undefined || input.outstandingAmount === ''
       ? principalAmount
       : normalizeMoney(input.outstandingAmount, 'Outstanding amount', { allowZero: true });
-
-    if (Number(outstandingAmount) > Number(principalAmount)) {
-      throw new Error('Outstanding amount cannot exceed principal amount.');
-    }
+    if (Number(outstandingAmount) > Number(principalAmount)) throw new Error('Outstanding amount cannot exceed principal amount.');
 
     return normalizeDebt(await debtRepository.create({
       userId,
@@ -109,12 +100,8 @@ const debtService = {
     if (input.principalAmount !== undefined) {
       const principal = Number(normalizeMoney(input.principalAmount, 'Principal amount'));
       const hasPaymentHistory = Array.isArray(existing.payments) && existing.payments.length > 0;
-      if (hasPaymentHistory) {
-        throw new Error('Principal amount cannot be changed after payments have been recorded. Reverse the payment history first.');
-      }
-      if (principal < Number(existing.outstandingAmount)) {
-        throw new Error('Principal amount cannot be below the outstanding amount.');
-      }
+      if (hasPaymentHistory) throw new Error('Principal amount cannot be changed after payments have been recorded. Reverse the payment history first.');
+      if (principal < Number(existing.outstandingAmount)) throw new Error('Principal amount cannot be below the outstanding amount.');
       data.principalAmount = principal.toFixed(2);
     }
 
@@ -126,7 +113,6 @@ const debtService = {
     const debt = await debtRepository.findByIdForUser(id, userId);
     if (!debt) return null;
     if (debt.status === 'ARCHIVED') throw new Error('Debt is already archived.');
-
     const archived = await debtRepository.archiveByIdForUser(id, userId);
     if (!archived) return null;
     return normalizeDebt(await debtRepository.findByIdForUser(id, userId));
@@ -136,7 +122,6 @@ const debtService = {
     const debt = await debtRepository.findByIdForUser(id, userId);
     if (!debt) return null;
     if (debt.status !== 'ARCHIVED') throw new Error('Only archived debts can be restored.');
-
     const status = Number(debt.outstandingAmount) === 0 ? 'PAID_OFF' : 'ACTIVE';
     const restored = await debtRepository.restoreByIdForUser(id, userId, status);
     if (!restored) return null;
@@ -146,9 +131,7 @@ const debtService = {
   async remove(userId, id) {
     const result = await debtRepository.deleteByIdForUser(id, userId);
     if (!result.found) return null;
-    if (result.hasPayments) {
-      throw new Error('Debt has payment history and cannot be permanently deleted. Reverse its payments first or archive it.');
-    }
+    if (result.hasPayments) throw new Error('Debt has payment history and cannot be permanently deleted. Reverse its payments first or archive it.');
     return result.deleted;
   },
 
@@ -167,34 +150,28 @@ const debtService = {
     const categoryId = input.categoryId || null;
     if (categoryId) {
       const category = await categoryRepository.findByIdForUser(categoryId, userId);
-      if (!category || !category.isActive || category.type !== 'EXPENSE') {
-        throw new Error('Payment category must be an active expense category.');
-      }
+      if (!category || !category.isActive || category.type !== 'EXPENSE') throw new Error('Payment category must be an active expense category.');
     }
 
     const paymentDate = normalizeDate(input.paymentDate);
+    const expectedOutstandingAmount = Number(debt.outstandingAmount).toFixed(2);
     const remaining = Number((Number(debt.outstandingAmount) - amount).toFixed(2));
 
     await debtRepository.createPaymentAndTransaction({
       debtId,
+      userId,
       transaction: {
         userId,
         accountId: input.accountId,
         categoryId,
         type: 'EXPENSE',
         amount: amount.toFixed(2),
-        description: typeof input.description === 'string' && input.description.trim()
-          ? input.description.trim().slice(0, 255)
-          : `Debt payment: ${debt.name}`,
+        description: typeof input.description === 'string' && input.description.trim() ? input.description.trim().slice(0, 255) : `Debt payment: ${debt.name}`,
         transactionDate: paymentDate,
         notes: typeof input.notes === 'string' && input.notes.trim() ? input.notes.trim() : null,
       },
-      payment: {
-        debtId,
-        userId,
-        amount: amount.toFixed(2),
-        paymentDate,
-      },
+      payment: { debtId, userId, amount: amount.toFixed(2), paymentDate },
+      expectedOutstandingAmount,
       outstandingAmount: remaining.toFixed(2),
       status: remaining === 0 ? 'PAID_OFF' : 'ACTIVE',
     });
@@ -210,15 +187,15 @@ const debtService = {
     const payment = debt.payments.find((item) => item.id === paymentId);
     if (!payment) return false;
 
+    const expectedOutstandingAmount = Number(debt.outstandingAmount).toFixed(2);
     const restored = Number(debt.outstandingAmount) + Number(payment.amount);
-    if (restored > Number(debt.principalAmount)) {
-      throw new Error('Cannot reverse this payment because it would exceed the principal amount.');
-    }
+    if (restored > Number(debt.principalAmount)) throw new Error('Cannot reverse this payment because it would exceed the principal amount.');
 
     await debtRepository.deletePaymentAndTransaction({
       paymentId,
       debtId,
       userId,
+      expectedOutstandingAmount,
       outstandingAmount: restored.toFixed(2),
       status: restored === 0 ? 'PAID_OFF' : 'ACTIVE',
     });
