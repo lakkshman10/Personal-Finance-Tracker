@@ -1,34 +1,24 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/prisma');
+const AppError = require('../utils/AppError');
 
 const authenticateToken = async (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1] || req.cookies.token;
+  const authorization = req.headers.authorization;
+  const bearerToken = authorization?.startsWith('Bearer ') ? authorization.slice(7).trim() : null;
+  const token = bearerToken || req.cookies?.token;
 
-  if (!token) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided.' });
-  }
+  if (!token) return next(new AppError('Authentication required.', 401));
 
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    if (!decoded.userId) {
-      return res.status(403).json({ message: 'Forbidden: Invalid token.' });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { id: true, email: true },
-    });
-
-    if (!user) return res.status(401).json({ message: 'Unauthorized: User not found.' });
-
+    if (!decoded.userId) return next(new AppError('Invalid authentication token.', 401));
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId }, select: { id: true, email: true } });
+    if (!user) return next(new AppError('Authentication required.', 401));
     req.user = user;
-    next();
+    return next();
   } catch (error) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(403).json({ message: 'Forbidden: Invalid or expired token.' });
-    }
-    console.error('Authentication error:', error.message);
-    return res.status(500).json({ message: 'Failed to authenticate user.' });
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError' || error.name === 'NotBeforeError') return next(new AppError('Authentication token is invalid or expired.', 401));
+    return next(error);
   }
 };
 
