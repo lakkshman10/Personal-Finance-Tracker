@@ -5,6 +5,7 @@ const prisma = require('../config/prisma');
 
 const ALLOWED_DURATIONS = new Set(['MONTHLY', 'CUSTOM']);
 const MAX_ADJUSTMENTS = 1;
+const MAX_BUDGET_AMOUNT = 999999999999.99;
 
 const normalizeDate = (value, fieldName) => {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new AppError(`${fieldName} must use YYYY-MM-DD format.`);
@@ -18,8 +19,12 @@ const normalizeMonth = (value) => {
   return date;
 };
 const normalizeAmount = (value) => {
-  const amount = Number(value);
+  if (typeof value !== 'number' && typeof value !== 'string') throw new AppError('Budget amount must be a positive number.');
+  const raw = String(value).trim();
+  if (!/^\d+(?:\.\d{1,2})?$/.test(raw)) throw new AppError('Budget amount must be a valid number with at most 2 decimal places.');
+  const amount = Number(raw);
   if (!Number.isFinite(amount) || amount <= 0) throw new AppError('Budget amount must be a positive number.');
+  if (amount > MAX_BUDGET_AMOUNT) throw new AppError('Budget amount cannot exceed 999999999999.99.');
   return amount.toFixed(2);
 };
 const normalizeAlertPercent = (value = 80) => {
