@@ -14,6 +14,17 @@ async function assertTransferAccounts(tx, userId, sourceAccountId, destinationAc
   if (accounts.length !== 2) throw new Error('Both transfer accounts must belong to you and be active.');
 }
 
+async function assertCompleteTransferGroup(tx, transferGroupId, userId) {
+  const rows = await tx.transaction.findMany({
+    where: { transferGroupId, userId, type: 'TRANSFER' },
+    select: { id: true, transferDirection: true },
+  });
+  if (rows.length !== 2 || !rows.some((row) => row.transferDirection === 'OUT') || !rows.some((row) => row.transferDirection === 'IN')) {
+    throw new Error('Transfer is incomplete or corrupted and cannot be modified.');
+  }
+  return rows;
+}
+
 const transactionRepository = {
   async findByUserId(userId, options = {}) {
     const { fromDate, toDate, type, limit = 100, offset = 0 } = options;
@@ -54,8 +65,7 @@ const transactionRepository = {
 
   async updateTransferGroupForUser(transferGroupId, userId, data) {
     return prisma.$transaction(async (tx) => {
-      const existing = await tx.transaction.findMany({ where: { transferGroupId, userId, type: 'TRANSFER' }, select: { id: true, transferDirection: true } });
-      if (existing.length !== 2 || !existing.some((r) => r.transferDirection === 'OUT') || !existing.some((r) => r.transferDirection === 'IN')) return null;
+      const existing = await assertCompleteTransferGroup(tx, transferGroupId, userId);
       await assertTransferAccounts(tx, userId, data.sourceAccountId, data.destinationAccountId);
       const out = existing.find((r) => r.transferDirection === 'OUT');
       const incoming = existing.find((r) => r.transferDirection === 'IN');
@@ -68,7 +78,9 @@ const transactionRepository = {
 
   async deleteTransferGroupForUser(transferGroupId, userId) {
     return prisma.$transaction(async (tx) => {
+      await assertCompleteTransferGroup(tx, transferGroupId, userId);
       const result = await tx.transaction.deleteMany({ where: { transferGroupId, userId, type: 'TRANSFER' } });
+      if (result.count !== 2) throw new Error('Transfer deletion did not remove exactly two linked transactions.');
       return result.count;
     });
   },
