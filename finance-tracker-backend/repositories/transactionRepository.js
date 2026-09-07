@@ -45,6 +45,10 @@ const transactionRepository = {
     return prisma.transaction.findFirst({ where: { id, userId }, include: includeRelations });
   },
 
+  async findDebtPaymentByTransactionIdForUser(transactionId, userId) {
+    return prisma.debtPayment.findFirst({ where: { transactionId, userId }, select: { id: true, debtId: true, transactionId: true } });
+  },
+
   async create(data) {
     return prisma.transaction.create({ data, include: includeRelations });
   },
