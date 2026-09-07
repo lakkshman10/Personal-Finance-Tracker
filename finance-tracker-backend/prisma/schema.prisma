@@ -28,6 +28,11 @@ enum TransactionType {
   TRANSFER
 }
 
+enum TransferDirection {
+  OUT
+  IN
+}
+
 enum BudgetDuration {
   MONTHLY
   CUSTOM
@@ -105,18 +110,19 @@ model Category {
 }
 
 model Transaction {
-  id              String          @id @default(uuid()) @db.Uuid
-  userId          String          @map("user_id") @db.Uuid
-  accountId       String          @map("account_id") @db.Uuid
-  categoryId      String?         @map("category_id") @db.Uuid
-  type            TransactionType
-  amount          Decimal         @db.Decimal(14, 2)
-  description     String          @db.VarChar(255)
-  transactionDate DateTime        @map("transaction_date") @db.Date
-  notes           String?
-  transferGroupId String?         @map("transfer_group_id") @db.Uuid
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
+  id               String            @id @default(uuid()) @db.Uuid
+  userId           String            @map("user_id") @db.Uuid
+  accountId        String            @map("account_id") @db.Uuid
+  categoryId       String?           @map("category_id") @db.Uuid
+  type             TransactionType
+  amount           Decimal           @db.Decimal(14, 2)
+  description      String            @db.VarChar(255)
+  transactionDate  DateTime          @map("transaction_date") @db.Date
+  notes            String?
+  transferGroupId  String?           @map("transfer_group_id") @db.Uuid
+  transferDirection TransferDirection? @map("transfer_direction")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   account  Account   @relation(fields: [accountId], references: [id], onDelete: Restrict)
