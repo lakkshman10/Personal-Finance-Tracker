@@ -1,37 +1,228 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import financeApi from '../services/financeApi';
+import DebtForm from '../components/debt/DebtForm';
+import DebtList from '../components/debt/DebtList';
+import DebtDetailsModal from '../components/debt/DebtDetailsModal';
+import DebtSummary from '../components/debt/DebtSummary';
+import '../components/debt/debtManagement.css';
 
 const today = new Date().toISOString().slice(0, 10);
-const blank = { name: '', principalAmount: '', outstandingAmount: '', interestRate: '', minimumPayment: '', dueDay: '' };
-const money = v => `₹${Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-const statusText = s => s === 'PAID_OFF' ? 'Paid Off' : s === 'ARCHIVED' ? 'Archived' : 'Active';
+const emptyDebt = { name: '', principalAmount: '', outstandingAmount: '', interestRate: '', minimumPayment: '', dueDay: '' };
+const emptyPayment = { amount: '', accountId: '', categoryId: '', paymentDate: today, description: '', notes: '' };
 
 export default function DebtManagement() {
-  const [debts,setDebts]=useState([]),[accounts,setAccounts]=useState([]),[categories,setCategories]=useState([]);
-  const [tab,setTab]=useState('ACTIVE'),[search,setSearch]=useState(''),[form,setForm]=useState(blank),[editing,setEditing]=useState(null);
-  const [payment,setPayment]=useState({amount:'',accountId:'',categoryId:'',paymentDate:today,description:'',notes:''});
-  const [openPayment,setOpenPayment]=useState(null),[details,setDetails]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false);
+  const [debts, setDebts] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [activeTab, setActiveTab] = useState('ACTIVE');
+  const [search, setSearch] = useState('');
+  const [form, setForm] = useState(emptyDebt);
+  const [editingId, setEditingId] = useState(null);
+  const [payment, setPayment] = useState(emptyPayment);
+  const [paymentDebtId, setPaymentDebtId] = useState(null);
+  const [details, setDetails] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const load=async()=>{setLoading(true);try{const [d,a,c]=await Promise.all([financeApi.debts.list('ALL'),financeApi.accounts.list({activeOnly:true}),financeApi.categories.list('EXPENSE')]);setDebts(d.data||[]);setAccounts(a.data||[]);setCategories(c.data||[]);setPayment(p=>({...p,accountId:(a.data||[]).some(x=>x.id===p.accountId)?p.accountId:(a.data||[])[0]?.id||''}));}catch(e){setError(e.response?.data?.message||'Unable to load debt data.');}finally{setLoading(false);}};
-  useEffect(()=>{load();},[]);
-  const counts=useMemo(()=>({ACTIVE:debts.filter(d=>d.status==='ACTIVE').length,PAID_OFF:debts.filter(d=>d.status==='PAID_OFF').length,ARCHIVED:debts.filter(d=>d.status==='ARCHIVED').length}),[debts]);
-  const totals=useMemo(()=>debts.reduce((x,d)=>({principal:x.principal+Number(d.principalAmount),outstanding:x.outstanding+Number(d.outstandingAmount),paid:x.paid+Number(d.paidAmount)}),{principal:0,outstanding:0,paid:0}),[debts]);
-  const visible=useMemo(()=>debts.filter(d=>d.status===tab&&d.name.toLowerCase().includes(search.toLowerCase())),[debts,tab,search]);
-  const save=async e=>{e.preventDefault();setSaving(true);try{if(editing)await financeApi.debts.update(editing,form);else await financeApi.debts.create(form);setForm(blank);setEditing(null);await load();}catch(e2){setError(e2.response?.data?.message||'Unable to save debt.');}finally{setSaving(false);}};
-  const archive=async d=>{if(!window.confirm(`Archive “${d.name}”? Payment history will be preserved.`))return;try{await financeApi.debts.archive(d.id);await load();}catch(e){setError(e.response?.data?.message||'Unable to archive debt.');}};
-  const restore=async d=>{if(!window.confirm(`Restore “${d.name}”?`))return;try{await financeApi.debts.restore(d.id);await load();setTab('ACTIVE');}catch(e){setError(e.response?.data?.message||'Unable to restore debt.');}};
-  const remove=async d=>{if(!window.confirm(`Permanently delete “${d.name}”? This cannot be undone.`))return;try{await financeApi.debts.remove(d.id);setDetails(null);await load();}catch(e){setError(e.response?.data?.message||'Unable to delete debt.');}};
-  const addPayment=async(e,id)=>{e.preventDefault();setSaving(true);try{await financeApi.debts.addPayment(id,payment);setPayment(p=>({...p,amount:'',categoryId:'',paymentDate:today,description:'',notes:''}));setOpenPayment(null);await load();}catch(e2){setError(e2.response?.data?.message||'Unable to record payment.');}finally{setSaving(false);}};
-  const reverse=async(d,p)=>{if(!window.confirm(`Reverse ${money(p.amount)} paid on ${p.paymentDate}? The linked expense will also be removed.`))return;try{await financeApi.debts.removePayment(d.id,p.id);await load();}catch(e){setError(e.response?.data?.message||'Unable to reverse payment.');}};
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [debtResponse, accountResponse, categoryResponse] = await Promise.all([
+        financeApi.debts.list('ALL'),
+        financeApi.accounts.list({ activeOnly: true }),
+        financeApi.categories.list('EXPENSE'),
+      ]);
+      const nextAccounts = accountResponse.data || [];
+      setDebts(debtResponse.data || []);
+      setAccounts(nextAccounts);
+      setCategories(categoryResponse.data || []);
+      setPayment((current) => ({
+        ...current,
+        accountId: nextAccounts.some((account) => account.id === current.accountId)
+          ? current.accountId
+          : nextAccounts[0]?.id || '',
+      }));
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to load debt data.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  return <main style={s.page}><header style={s.header}><div><h1 style={s.title}>Debt Management</h1><p style={s.muted}>Track debts, repayments, progress and history.</p></div><button style={s.primary} onClick={()=>{setEditing(null);setForm(blank);}}>+ Add Debt</button></header>
-    {error&&<div style={s.error}>{error}<button style={s.x} onClick={()=>setError('')}>×</button></div>}
-    <div style={s.summary}><Stat t="Outstanding" v={money(totals.outstanding)}/><Stat t="Total Borrowed" v={money(totals.principal)}/><Stat t="Total Paid" v={money(totals.paid)}/><Stat t="Active Debts" v={counts.ACTIVE}/></div>
-    <div style={s.layout}><section style={s.panel}><h2 style={s.h2}>{editing?'Edit Debt':'Add a Debt'}</h2><p style={s.muted}>{editing?'Update debt details.':'Record original and current balances.'}</p><form onSubmit={save} style={s.form}><Field l="Debt name"><input style={s.input} value={form.name} placeholder="e.g. Home Loan" onChange={e=>setForm({...form,name:e.target.value})} required/></Field><div style={s.grid}><Field l="Principal"><input style={s.input} type="number" min=".01" step=".01" value={form.principalAmount} onChange={e=>setForm({...form,principalAmount:e.target.value})} required/></Field><Field l="Current outstanding"><input style={s.input} type="number" min="0" step=".01" value={form.outstandingAmount} disabled={!!editing} placeholder={editing?'Unchanged':'Same as principal'} onChange={e=>setForm({...form,outstandingAmount:e.target.value})}/></Field></div><div style={s.grid}><Field l="Interest rate (%)"><input style={s.input} type="number" min="0" max="100" step=".0001" value={form.interestRate} onChange={e=>setForm({...form,interestRate:e.target.value})}/></Field><Field l="Minimum payment"><input style={s.input} type="number" min=".01" step=".01" value={form.minimumPayment} onChange={e=>setForm({...form,minimumPayment:e.target.value})}/></Field></div><Field l="Due day"><input style={s.input} type="number" min="1" max="31" value={form.dueDay} placeholder="Optional" onChange={e=>setForm({...form,dueDay:e.target.value})}/></Field><div><button style={s.primary} disabled={saving}>{saving?'Saving…':editing?'Save Changes':'Add Debt'}</button>{editing&&<button type="button" style={s.secondary} onClick={()=>{setEditing(null);setForm(blank);}}>Cancel</button>}</div></form></section>
-      <section style={s.panel}><div style={s.listHead}><div><h2 style={s.h2}>Your Debts</h2><p style={s.muted}>{debts.length} total records</p></div><input style={s.search} placeholder="Search debts…" value={search} onChange={e=>setSearch(e.target.value)}/></div><div style={s.tabs}>{[['ACTIVE','Active'],['PAID_OFF','Paid Off'],['ARCHIVED','Archived']].map(([v,t])=><button key={v} style={{...s.tab,...(tab===v?s.tabOn:{})}} onClick={()=>setTab(v)}>{t} ({counts[v]})</button>)}</div>{loading?<p style={s.empty}>Loading…</p>:visible.length===0?<p style={s.empty}>No {statusText(tab).toLowerCase()} debts.</p>:visible.map(d=><DebtCard key={d.id} d={d} open={openPayment===d.id} setOpen={setOpenPayment} onDetails={()=>setDetails(d)} onEdit={()=>{setEditing(d.id);setForm({name:d.name,principalAmount:d.principalAmount,outstandingAmount:'',interestRate:d.interestRate,minimumPayment:d.minimumPayment||'',dueDay:d.dueDay||''});}} onArchive={()=>archive(d)} onRestore={()=>restore(d)} onDelete={()=>remove(d)} onPayment={addPayment} accounts={accounts} categories={categories} payment={payment} setPayment={setPayment} saving={saving}/>)}</section></div>
-    {details&&<div style={s.overlay}><div style={s.modal}><div style={s.modalHead}><div><h2 style={s.h2}>{details.name}</h2><span style={s.badge}>{statusText(details.status)}</span></div><button style={s.x} onClick={()=>setDetails(null)}>×</button></div><div style={s.detailGrid}><Stat t="Principal" v={money(details.principalAmount)}/><Stat t="Paid" v={money(details.paidAmount)}/><Stat t="Outstanding" v={money(details.outstandingAmount)}/></div><h3 style={s.h3}>Payment History</h3>{!details.payments?.length?<p style={s.empty}>No payments recorded.</p>:details.payments.map(p=><div style={s.paymentRow} key={p.id}><div><b>{money(p.amount)}</b><small style={s.rowMuted}>{p.paymentDate} • {p.transaction?.account?.name||'Account'}{p.transaction?.category?.name?` • ${p.transaction.category.name}`:''}</small></div>{details.status!=='ARCHIVED'&&<button style={s.delete} onClick={()=>reverse(details,p)}>Reverse</button>}</div>)}{details.status==='ARCHIVED'&&<div style={s.actions}><button style={s.primarySmall} onClick={()=>restore(details)}>Restore</button><button style={s.delete} onClick={()=>remove(details)}>Delete</button></div>}</div></div>}
-  </main>;
+  useEffect(() => { load(); }, []);
+
+  const counts = useMemo(() => ({
+    ACTIVE: debts.filter((debt) => debt.status === 'ACTIVE').length,
+    PAID_OFF: debts.filter((debt) => debt.status === 'PAID_OFF').length,
+    ARCHIVED: debts.filter((debt) => debt.status === 'ARCHIVED').length,
+  }), [debts]);
+
+  const totals = useMemo(() => debts.reduce((result, debt) => ({
+    principal: result.principal + Number(debt.principalAmount || 0),
+    outstanding: result.outstanding + Number(debt.outstandingAmount || 0),
+    paid: result.paid + Number(debt.paidAmount || 0),
+  }), { principal: 0, outstanding: 0, paid: 0 }), [debts]);
+
+  const visibleDebts = useMemo(() => debts.filter((debt) => (
+    debt.status === activeTab && debt.name.toLowerCase().includes(search.toLowerCase())
+  )), [debts, activeTab, search]);
+
+  const resetDebtForm = () => {
+    setForm(emptyDebt);
+    setEditingId(null);
+  };
+
+  const saveDebt = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      if (editingId) await financeApi.debts.update(editingId, form);
+      else await financeApi.debts.create(form);
+      resetDebtForm();
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to save debt.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const editDebt = (debt) => {
+    setEditingId(debt.id);
+    setForm({
+      name: debt.name,
+      principalAmount: debt.principalAmount,
+      outstandingAmount: '',
+      interestRate: debt.interestRate,
+      minimumPayment: debt.minimumPayment || '',
+      dueDay: debt.dueDay || '',
+    });
+  };
+
+  const archiveDebt = async (debt) => {
+    if (!window.confirm(`Archive “${debt.name}”? Payment history will be preserved.`)) return;
+    try {
+      await financeApi.debts.archive(debt.id);
+      if (details?.id === debt.id) setDetails(null);
+      await load();
+      setActiveTab('ARCHIVED');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to archive debt.');
+    }
+  };
+
+  const restoreDebt = async (debt) => {
+    if (!window.confirm(`Restore “${debt.name}”?`)) return;
+    try {
+      await financeApi.debts.restore(debt.id);
+      setDetails(null);
+      await load();
+      setActiveTab(Number(debt.outstandingAmount) === 0 ? 'PAID_OFF' : 'ACTIVE');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to restore debt.');
+    }
+  };
+
+  const deleteDebt = async (debt) => {
+    if (!window.confirm(`Permanently delete “${debt.name}”? This cannot be undone.`)) return;
+    try {
+      await financeApi.debts.remove(debt.id);
+      setDetails(null);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to delete debt.');
+    }
+  };
+
+  const startPayment = (debt) => {
+    setPaymentDebtId(debt.id);
+    setPayment((current) => ({ ...emptyPayment, accountId: current.accountId || accounts[0]?.id || '' }));
+  };
+
+  const addPayment = async (event, debtId) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      await financeApi.debts.addPayment(debtId, payment);
+      setPayment(emptyPayment);
+      setPaymentDebtId(null);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to record payment.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const reversePayment = async (debt, paymentRecord) => {
+    if (!window.confirm(`Reverse ₹${Number(paymentRecord.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })} paid on ${paymentRecord.paymentDate}? The linked expense will also be removed.`)) return;
+    try {
+      await financeApi.debts.removePayment(debt.id, paymentRecord.id);
+      setDetails(null);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to reverse payment.');
+    }
+  };
+
+  return (
+    <main className="debt-page">
+      <header className="debt-page__header">
+        <div>
+          <h1>Debt Management</h1>
+          <p>Track debts, repayments, progress and history.</p>
+        </div>
+      </header>
+
+      {error && <div className="debt-alert">{error}<button onClick={() => setError('')} aria-label="Dismiss">×</button></div>}
+
+      <DebtSummary totals={totals} activeCount={counts.ACTIVE} />
+
+      <div className="debt-layout">
+        <DebtForm
+          form={form}
+          editing={Boolean(editingId)}
+          saving={saving}
+          onChange={setForm}
+          onSubmit={saveDebt}
+          onCancel={resetDebtForm}
+        />
+
+        <DebtList
+          debts={visibleDebts}
+          total={debts.length}
+          counts={counts}
+          activeTab={activeTab}
+          search={search}
+          loading={loading}
+          paymentDebtId={paymentDebtId}
+          payment={payment}
+          accounts={accounts}
+          categories={categories}
+          saving={saving}
+          onTabChange={setActiveTab}
+          onSearchChange={setSearch}
+          onDetails={setDetails}
+          onEdit={editDebt}
+          onArchive={archiveDebt}
+          onRestore={restoreDebt}
+          onDelete={deleteDebt}
+          onPaymentStart={startPayment}
+          onPayment={addPayment}
+          onPaymentChange={setPayment}
+        />
+      </div>
+
+      {details && (
+        <DebtDetailsModal
+          debt={details}
+          onClose={() => setDetails(null)}
+          onRestore={restoreDebt}
+          onDelete={deleteDebt}
+          onReversePayment={reversePayment}
+        />
+      )}
+    </main>
+  );
 }
-function DebtCard({d,open,setOpen,onDetails,onEdit,onArchive,onRestore,onDelete,onPayment,accounts,categories,payment,setPayment,saving}){return <article style={s.debt}><div style={s.debtHead}><div><h3 style={s.h3}>{d.name}</h3><span style={s.badge}>{statusText(d.status)}</span></div><strong>{money(d.outstandingAmount)}</strong></div><div style={s.progressText}><span>{d.progressPercent}% paid</span><span>{money(d.paidAmount)} of {money(d.principalAmount)}</span></div><div style={s.track}><div style={{...s.fill,width:`${Math.min(100,d.progressPercent)}%`}}/></div><p style={s.meta}>{Number(d.interestRate).toFixed(2)}% interest{d.minimumPayment?` • Min ${money(d.minimumPayment)}`:''}{d.dueDay?` • Due day ${d.dueDay}`:''}</p><div style={s.actions}><button style={s.secondary} onClick={onDetails}>Details</button>{d.status==='ACTIVE'&&<><button style={s.primarySmall} onClick={()=>setOpen(open?null:d.id)}>{open?'Close':'Make Payment'}</button><button style={s.secondary} onClick={onEdit}>Edit</button><button style={s.archive} onClick={onArchive}>Archive</button></>}{d.status==='PAID_OFF'&&<button style={s.archive} onClick={onArchive}>Archive</button>}{d.status==='ARCHIVED'&&<><button style={s.primarySmall} onClick={onRestore}>Restore</button><button style={s.delete} onClick={onDelete}>Delete</button></>}</div>{open&&<form style={s.paymentBox} onSubmit={e=>onPayment(e,d.id)}><h4>Record repayment</h4><div style={s.grid}><Field l="Amount"><input style={s.input} type="number" min=".01" max={d.outstandingAmount} step=".01" value={payment.amount} onChange={e=>setPayment({...payment,amount:e.target.value})} required/></Field><Field l="Paid from"><select style={s.input} value={payment.accountId} onChange={e=>setPayment({...payment,accountId:e.target.value})} required><option value="">Select account</option>{accounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></Field></div>{!accounts.length&&<p style={s.warning}>No active financial account. Create or activate one first.</p>}<div style={s.grid}><Field l="Expense category"><select style={s.input} value={payment.categoryId} onChange={e=>setPayment({...payment,categoryId:e.target.value})}><option value="">No category</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></Field><Field l="Payment date"><input style={s.input} type="date" max={today} value={payment.paymentDate} onChange={e=>setPayment({...payment,paymentDate:e.target.value})} required/></Field></div><Field l="Description"><input style={s.input} value={payment.description} onChange={e=>setPayment({...payment,description:e.target.value})}/></Field><button style={s.primary} disabled={saving||!accounts.length}>{saving?'Recording…':'Record Payment'}</button></form>}</article>}
-function Field({l,children}){return <label style={s.field}><span style={s.label}>{l}</span>{children}</label>};function Stat({t,v}){return <div style={s.stat}><span>{t}</span><strong>{v}</strong></div>}
-const s={page:{fontFamily:'"Rubik",sans-serif',maxWidth:1280,margin:'0 auto',padding:'24px 20px 50px',color:'#263238'},header:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:20,marginBottom:22},title:{margin:0,fontSize:30},muted:{margin:'5px 0',color:'#71808d',fontSize:13},summary:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:20},stat:{padding:16,background:'#fff',border:'1px solid #e8ecef',borderRadius:12,display:'flex',flexDirection:'column',gap:6},layout:{display:'grid',gridTemplateColumns:'360px minmax(0,1fr)',gap:20,alignItems:'start'},panel:{background:'#fff',border:'1px solid #e8ecef',borderRadius:14,padding:20},h2:{margin:'0 0 5px',fontSize:20},h3:{margin:'0 0 6px',fontSize:17},form:{display:'flex',flexDirection:'column',gap:12},field:{display:'flex',flexDirection:'column',gap:5},label:{fontSize:12,fontWeight:600,color:'#56616b'},input:{width:'100%',boxSizing:'border-box',padding:'10px 11px',border:'1px solid #d5dbe0',borderRadius:8,fontFamily:'inherit'},grid:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10},primary:{border:0,borderRadius:8,padding:'10px 15px',background:'#007bff',color:'#fff',fontWeight:600,cursor:'pointer'},primarySmall:{border:0,borderRadius:7,padding:'8px 11px',background:'#007bff',color:'#fff',fontWeight:600,cursor:'pointer'},secondary:{border:'1px solid #d6dce1',borderRadius:7,padding:'8px 11px',background:'#fff',cursor:'pointer'},archive:{border:0,borderRadius:7,padding:'8px 11px',background:'#fff3e0',color:'#9a5b00',fontWeight:600,cursor:'pointer'},delete:{border:0,borderRadius:7,padding:'8px 11px',background:'#fdecec',color:'#c0392b',fontWeight:600,cursor:'pointer'},listHead:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,marginBottom:12},search:{width:180,padding:9,border:'1px solid #d5dbe0',borderRadius:8,fontFamily:'inherit'},tabs:{display:'flex',gap:4,borderBottom:'1px solid #e5e9ed',marginBottom:14},tab:{border:0,background:'transparent',padding:'10px 12px',cursor:'pointer',color:'#69737d',fontFamily:'inherit'},tabOn:{color:'#007bff',borderBottom:'2px solid #007bff',fontWeight:700},debt:{border:'1px solid #e4e8eb',borderRadius:11,padding:16,marginBottom:12},debtHead:{display:'flex',justifyContent:'space-between',gap:12},badge:{display:'inline-block',fontSize:11,padding:'3px 7px',borderRadius:20,background:'#eef5ff',color:'#2867b2',fontWeight:600},progressText:{display:'flex',justifyContent:'space-between',fontSize:12,color:'#69737d',marginTop:13},track:{height:8,background:'#edf0f2',borderRadius:10,overflow:'hidden',marginTop:5},fill:{height:'100%',background:'#4caf50',borderRadius:10},meta:{fontSize:12,color:'#69737d'},actions:{display:'flex',gap:7,flexWrap:'wrap'},paymentBox:{marginTop:15,paddingTop:15,borderTop:'1px solid #e8ecef',display:'flex',flexDirection:'column',gap:10},warning:{fontSize:12,color:'#a45b00',background:'#fff7e8',padding:9,borderRadius:7},empty:{padding:28,textAlign:'center',color:'#7b8490'},error:{position:'relative',padding:12,marginBottom:16,background:'#fdecec',color:'#c0392b',borderRadius:8},x:{border:0,background:'transparent',fontSize:22,cursor:'pointer',float:'right'},overlay:{position:'fixed',inset:0,background:'rgba(15,23,42,.45)',display:'flex',alignItems:'center',justifyContent:'center',padding:20,zIndex:20},modal:{background:'#fff',borderRadius:14,maxWidth:720,width:'100%',maxHeight:'90vh',overflow:'auto',padding:22},modalHead:{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:18},detailGrid:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:22},paymentRow:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:10,padding:'11px 0',borderBottom:'1px solid #edf0f2'},rowMuted:{display:'block',fontSize:12,color:'#7b8490',marginTop:3}};
