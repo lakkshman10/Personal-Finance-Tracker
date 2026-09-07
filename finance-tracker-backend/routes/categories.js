@@ -1,36 +1,10 @@
 const express = require('express');
 const authenticateToken = require('../middlewares/authMiddleware');
 const categoryService = require('../services/categoryService');
-
+const AppError = require('../utils/AppError');
 const router = express.Router();
 router.use(authenticateToken);
-
-router.get('/', async (req, res) => {
-  try {
-    const categories = await categoryService.list(req.user.id, req.query.type);
-    res.json(categories);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-router.post('/', async (req, res) => {
-  try {
-    const category = await categoryService.create(req.user.id, req.body);
-    res.status(201).json(category);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
-router.patch('/:id', async (req, res) => {
-  try {
-    const category = await categoryService.update(req.user.id, req.params.id, req.body || {});
-    if (!category) return res.status(404).json({ message: 'Category not found.' });
-    return res.json(category);
-  } catch (error) {
-    return res.status(400).json({ message: error.message });
-  }
-});
-
+router.get('/', async (req, res, next) => { try { return res.json(await categoryService.list(req.user.id, req.query.type)); } catch (error) { return next(error); } });
+router.post('/', async (req, res, next) => { try { return res.status(201).json(await categoryService.create(req.user.id, req.body)); } catch (error) { return next(error); } });
+router.patch('/:id', async (req, res, next) => { try { const category = await categoryService.update(req.user.id, req.params.id, req.body || {}); if (!category) return next(new AppError('Category not found.', 404)); return res.json(category); } catch (error) { return next(error); } });
 module.exports = router;
