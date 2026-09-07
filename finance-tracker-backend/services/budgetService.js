@@ -73,7 +73,7 @@ const budgetService = {
     const nextEndDate = input.endDate !== undefined ? input.endDate : existing.endDate?.toISOString().slice(0, 10) ?? null;
     const dates = validateDates(nextDuration, nextStartDate, nextEndDate);
 
-    const changed = nextAmount !== existing.amount.toString() || nextAlertPercent !== existing.alertPercent.toString() || nextCategoryId !== existing.categoryId || nextMonth.getTime() !== existing.month.getTime() || nextDuration !== existing.duration;
+    const changed = nextAmount !== existing.amount.toString() || nextAlertPercent !== existing.alertPercent.toString() || nextCategoryId !== existing.categoryId || nextMonth.getTime() !== existing.month.getTime() || nextDuration !== existing.duration || dates.startDate?.getTime() !== existing.startDate?.getTime() || dates.endDate?.getTime() !== existing.endDate?.getTime();
     if (!changed) return existing;
 
     if (existing.adjustments.length >= MAX_ADJUSTMENTS) throw new Error('This budget has already been adjusted once. Further adjustments are not allowed.');
@@ -81,9 +81,21 @@ const budgetService = {
     if (input.reason.trim().length > 500) throw new Error('Adjustment reason must be 500 characters or fewer.');
 
     await prisma.$transaction(async (tx) => {
+      const lockedBudget = await tx.$queryRaw`SELECT id FROM budgets WHERE id = ${id} AND user_id = ${userId} FOR UPDATE`;
+      if (lockedBudget.length === 0) throw new Error('Budget not found.');
+
+      const current = await tx.budget.findFirst({ where: { id, userId }, include: { adjustments: { orderBy: { createdAt: 'asc' } } } });
+      if (!current) throw new Error('Budget not found.');
+
+      const currentStart = current.startDate?.getTime() ?? null;
+      const currentEnd = current.endDate?.getTime() ?? null;
+      const latestChanged = nextAmount !== current.amount.toString() || nextAlertPercent !== current.alertPercent.toString() || nextCategoryId !== current.categoryId || nextMonth.getTime() !== current.month.getTime() || nextDuration !== current.duration || dates.startDate?.getTime() !== currentStart || dates.endDate?.getTime() !== currentEnd;
+      if (!latestChanged) return;
+      if (current.adjustments.length >= MAX_ADJUSTMENTS) throw new Error('This budget has already been adjusted once. Further adjustments are not allowed.');
+
       const result = await tx.budget.updateMany({ where: { id, userId }, data: { categoryId: nextCategoryId, month: nextMonth, amount: nextAmount, alertPercent: nextAlertPercent, duration: nextDuration, startDate: dates.startDate, endDate: dates.endDate } });
       if (result.count === 0) throw new Error('Budget not found.');
-      await tx.budgetAdjustment.create({ data: { budgetId: id, oldAmount: existing.amount, newAmount: nextAmount, oldAlertPercent: existing.alertPercent, newAlertPercent: nextAlertPercent, reason: input.reason.trim() } });
+      await tx.budgetAdjustment.create({ data: { budgetId: id, oldAmount: current.amount, newAmount: nextAmount, oldAlertPercent: current.alertPercent, newAlertPercent: nextAlertPercent, reason: input.reason.trim() } });
     });
     return budgetRepository.findByIdForUser(id, userId);
   },
