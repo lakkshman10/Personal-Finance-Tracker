@@ -14,6 +14,14 @@ const lockGoal = async (tx, id, userId) => {
   return rows.length > 0;
 };
 
+const getCurrentSaved = async (tx, goalId, userId) => {
+  const aggregate = await tx.savingsGoalContribution.aggregate({
+    where: { goalId, userId },
+    _sum: { amount: true },
+  });
+  return Number(aggregate._sum.amount || 0);
+};
+
 const savingsGoalRepository = {
   async findByUserId(userId) {
     return prisma.savingsGoal.findMany({
@@ -33,8 +41,15 @@ const savingsGoalRepository = {
       const locked = await lockGoal(tx, id, userId);
       if (!locked) return null;
 
-      const existing = await tx.savingsGoal.findFirst({ where: { id, userId } });
+      const existing = await tx.savingsGoal.findFirst({ where: { id, userId, isActive: true } });
       if (!existing) return null;
+
+      if (data.targetAmount !== undefined) {
+        const currentSaved = await getCurrentSaved(tx, id, userId);
+        if (Number(data.targetAmount) < currentSaved) {
+          throw new Error('Target amount cannot be less than the amount already saved.');
+        }
+      }
 
       return tx.savingsGoal.update({
         where: { id },
@@ -55,11 +70,7 @@ const savingsGoalRepository = {
       const goal = await tx.savingsGoal.findFirst({ where: { id: data.goalId, userId: data.userId, isActive: true } });
       if (!goal) return null;
 
-      const aggregate = await tx.savingsGoalContribution.aggregate({
-        where: { goalId: data.goalId, userId: data.userId },
-        _sum: { amount: true },
-      });
-      const currentSaved = Number(aggregate._sum.amount || 0);
+      const currentSaved = await getCurrentSaved(tx, data.goalId, data.userId);
       if (currentSaved + Number(data.amount) > Number(goal.targetAmount)) {
         throw new Error('Contribution would exceed the target amount.');
       }
