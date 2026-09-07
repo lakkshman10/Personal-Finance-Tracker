@@ -15,6 +15,7 @@ const accountRoutes = require('./routes/accounts');
 const categoryRoutes = require('./routes/categories');
 const transactionRoutes = require('./routes/transactions');
 const debtRoutes = require('./routes/debts');
+const errorHandler = require('./middlewares/errorHandler');
 const prisma = require('./config/prisma');
 
 const app = express();
@@ -40,6 +41,12 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/debts', debtRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/health', healthRoutes);
+
+app.use((req, res) => {
+  res.status(404).json({ message: 'Endpoint not found.' });
+});
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
