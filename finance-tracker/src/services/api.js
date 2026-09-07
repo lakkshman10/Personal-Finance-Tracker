@@ -1,28 +1,37 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+let accessToken = null;
+let refreshPromise = null;
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+const api = axios.create({ baseURL: API_BASE_URL, withCredentials: true, headers: { 'Content-Type': 'application/json' } });
 
-// Request interceptor: automatically attach Authorization header if token exists
+export const setAccessToken = (token) => { accessToken = token || null; };
+export const clearAccessToken = () => { accessToken = null; };
+
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (accessToken) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: centralize error logging and 401 handling
+const refreshAccessToken = async () => {
+  if (!refreshPromise) {
+    refreshPromise = api.post('/auth/refresh-token').then((response) => {
+      const token = response.data?.accessToken;
+      if (!token) throw new Error('Refresh response did not contain an access token.');
+      setAccessToken(token);
+      return token;
+    }).finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -32,22 +41,18 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true;
-
       try {
-        const refreshResponse = await api.post('/auth/refresh-token');
-        const { accessToken } = refreshResponse.data;
-        localStorage.setItem('token', accessToken);
+        const token = await refreshAccessToken();
         originalRequest.headers = originalRequest.headers || {};
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
       } catch (refreshError) {
-        localStorage.removeItem('token');
+        clearAccessToken();
         localStorage.removeItem('user');
         window.location.replace('/signin');
         return Promise.reject(refreshError);
       }
     }
-
     return Promise.reject(error);
   }
 );
