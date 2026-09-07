@@ -41,21 +41,42 @@ const debtRepository = {
       return { found: true, deleted: true, hasPayments: false };
     });
   },
-  async createPaymentAndTransaction({ debtId, transaction, payment, outstandingAmount, status }) {
+  async createPaymentAndTransaction({ debtId, userId, transaction, payment, expectedOutstandingAmount, outstandingAmount, status }) {
     return prisma.$transaction(async (tx) => {
       const createdTransaction = await tx.transaction.create({ data: transaction });
       await tx.debtPayment.create({ data: { ...payment, transactionId: createdTransaction.id } });
-      await tx.debt.update({ where: { id: debtId }, data: { outstandingAmount, status } });
+
+      // Compare-and-swap the outstanding amount so concurrent payments cannot
+      // both calculate from the same stale balance and overwrite each other.
+      const updatedDebt = await tx.debt.updateMany({
+        where: { id: debtId, userId, outstandingAmount: expectedOutstandingAmount },
+        data: { outstandingAmount, status },
+      });
+      if (updatedDebt.count !== 1) {
+        throw new Error('Debt balance changed while recording this payment. Please retry the payment.');
+      }
+
       return createdTransaction;
     });
   },
-  async deletePaymentAndTransaction({ paymentId, debtId, userId, outstandingAmount, status }) {
+  async deletePaymentAndTransaction({ paymentId, debtId, userId, expectedOutstandingAmount, outstandingAmount, status }) {
     return prisma.$transaction(async (tx) => {
       const payment = await tx.debtPayment.findFirst({ where: { id: paymentId, userId, debtId } });
       if (!payment) return false;
+
       await tx.debtPayment.delete({ where: { id: paymentId } });
       await tx.transaction.delete({ where: { id: payment.transactionId } });
-      await tx.debt.update({ where: { id: debtId }, data: { outstandingAmount, status } });
+
+      // Reversal also uses compare-and-swap to prevent concurrent reversals or
+      // payments from silently overwriting the debt balance.
+      const updatedDebt = await tx.debt.updateMany({
+        where: { id: debtId, userId, outstandingAmount: expectedOutstandingAmount },
+        data: { outstandingAmount, status },
+      });
+      if (updatedDebt.count !== 1) {
+        throw new Error('Debt balance changed while reversing this payment. Please retry.');
+      }
+
       return true;
     });
   },
