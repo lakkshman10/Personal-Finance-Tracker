@@ -3,76 +3,99 @@
 **Project:** Personal Finance Tracker  
 **Repository:** `lakkshman10/Personal-Finance-Tracker`  
 **Branch:** `main`  
-**Last reviewed:** 2026-09-06
+**Last reviewed:** 2026-09-12
 
 ## Current state
 
-The application uses **PostgreSQL + Prisma as its financial and authentication datastore**. MongoDB/Mongoose has been removed from the runtime architecture.
+The application is in a **stabilization and hardening phase**. The main financial workflows are implemented on PostgreSQL and the backend has received substantial security, validation, integrity, and concurrency hardening.
 
-- React frontend
-- Node.js/Express backend
-- PostgreSQL via Prisma
-- JWT authentication with PostgreSQL user IDs
-- Expense Tracker backed by PostgreSQL transactions
-- Dashboard backed by PostgreSQL transactions and budgets
-- Budgeting backed by PostgreSQL budgets/categories
-- PostgreSQL accounts and categories
-- Finance news proxy
-- Redux/PWA foundation
-
-## Financial migration status
-
-| Area | Status | Notes |
-| --- | --- | --- |
-| PostgreSQL schema | ✅ Complete | Users, accounts, categories, transactions, budgets, budget adjustments |
-| Prisma migrations | ✅ Complete | Foundation migration applied |
-| System categories | ✅ Complete | Default expense categories seeded |
-| Authentication | ✅ Migrated | Signup, signin, check, refresh and logout use PostgreSQL |
-| Expense Tracker | ✅ Migrated | Create, read, edit, delete, charts and trends use PostgreSQL |
-| Dashboard | ✅ Migrated | Derived from PostgreSQL transactions/budgets |
-| Budgeting | ✅ Migrated | PostgreSQL CRUD with adjustment history/rules |
-| Finance API client | ✅ Complete | Centralized PostgreSQL financial API access |
-| MongoDB runtime connection | ✅ Removed | No connection is started by the server |
-| MongoDB financial models | ✅ Removed | Legacy models/controllers/routes deleted |
-| Mongoose dependency | ✅ Removed | Removed from backend package manifest |
-
-## Pages
-
-- Dashboard — active, PostgreSQL-backed
-- Expense Tracker — active, PostgreSQL-backed
-- Budgeting — active, PostgreSQL-backed
-- Finance News — active
-- Finance Assistant — foundation
-- Community — active UI
-- Contact — active UI
-- Income Tracking — placeholder for future income features
-- Savings Goals — placeholder for future savings-goal features
-- Reports & Insights — placeholder for future reporting features
-
-## Architecture
+### Architecture
 
 ```text
-React Frontend
-    │
-    ▼
-REST API / Express
-    │
-    ▼
-Controllers / Services / Repositories
-    │
-    ▼
+React frontend
+      │
+      ▼
+Express REST API
+      │
+      ▼
+Controllers → Services → Repositories
+      │
+      ▼
 Prisma
-    │
-    ▼
+      │
+      ▼
 PostgreSQL
 ```
 
-MongoDB is no longer part of this request path.
+## Feature status
 
-## Important post-migration test
+| Area | Status |
+| --- | --- |
+| Authentication & sessions | ✅ Implemented and hardened |
+| Dashboard | ✅ Implemented |
+| Expense tracking | ✅ Implemented |
+| Income tracking | ✅ Implemented |
+| Budgeting | ✅ Implemented |
+| Savings goals | ✅ Implemented |
+| Debt management | ✅ Implemented |
+| Accounts & categories | ✅ Implemented |
+| Reports & insights | ✅ Implemented |
+| Finance News | ✅ Implemented |
+| Community | 🟡 UI foundation |
+| Finance Assistant | 🟡 UI foundation |
+| Contact | 🟡 UI foundation |
 
-After pulling/running the latest code, sign in again so the browser receives a JWT containing the PostgreSQL UUID. Then verify signup/signin, Expense Tracker CRUD, Dashboard, Budgeting CRUD, refresh-token flow, and `/api/health/db` with MongoDB stopped.
+## Database
 
-## Future work
+- PostgreSQL is the single application datastore.
+- Prisma manages schema and migrations.
+- Authentication and financial records use PostgreSQL/Prisma.
+- User ownership is enforced throughout the data-access layer.
+- Database constraints protect important financial invariants.
+- Seven Prisma migrations are currently applied and the schema was verified as up to date during the migration work.
 
-Income tracking, savings goals, reports/insights, debt management, richer account management, recurring transactions, and production hardening remain separate feature work and are not required for the PostgreSQL cutover.
+## Security and integrity hardening
+
+Completed areas include:
+
+- Persistent refresh sessions with rotation and revocation
+- Atomic account/password/session operations
+- Access-token handling kept in memory on the frontend
+- HttpOnly refresh-token cookies
+- Authentication rate limiting
+- Global API rate limiting
+- Request body limits
+- Centralized API error handling
+- Strict account and password validation
+- Financial amount/date/range validation
+- Transfer pair integrity
+- Debt-payment transaction protection and concurrency handling
+- Savings-goal contribution concurrency protection
+- Budget concurrency protection and adjustment rules
+- Database-level financial integrity checks
+- User-scoped repository queries
+- Report spending aggregation optimization
+
+## Testing status
+
+Testing infrastructure exists for both backend and frontend, but the current priority is to expand automated coverage around critical financial and authentication workflows.
+
+Known verification status:
+
+- Prisma migration status was verified successfully during the PostgreSQL migration.
+- Prisma client generation was verified successfully.
+- Earlier authentication fixes were manually verified locally.
+- The latest hardening changes have not all been runtime-tested yet.
+- No automated test suite result should be considered current until it is executed against the latest `main` state.
+
+## Remaining priorities
+
+1. Run the latest backend and frontend test suites.
+2. Add focused automated tests for authentication/session rotation, transfers, debt payments, savings goals, budgets, and account selection.
+3. Perform a final end-to-end local verification of the major user workflows.
+4. Review remaining production-readiness items after stabilization.
+5. Continue UX/UI refinement separately from backend hardening.
+
+## Documentation rule
+
+`README.md` is the developer-facing setup and architecture guide. This file is the concise internal snapshot of the project's current implementation, hardening, testing state, and remaining priorities.
