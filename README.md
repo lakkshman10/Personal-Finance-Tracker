@@ -1,8 +1,8 @@
 # Personal Finance Tracker
 
-A full-stack personal finance application for tracking expenses, managing budgets, visualizing spending, and progressively adding income, savings, reports, and financial assistance features.
+A full-stack personal finance application for tracking expenses, budgets, accounts, debts, savings goals, income, reports, and financial information.
 
-## Current architecture
+## Architecture
 
 ```text
 React frontend
@@ -11,7 +11,7 @@ React frontend
 Node.js / Express REST API
       │
       ▼
-Services + Repositories
+Controllers → Services → Repositories
       │
       ▼
 Prisma
@@ -20,41 +20,62 @@ Prisma
 PostgreSQL
 ```
 
-**PostgreSQL is now the single application datastore for authentication and financial data. MongoDB/Mongoose is no longer used by the backend runtime.**
+PostgreSQL is the application's datastore. Prisma manages the database schema and migrations.
 
-## Implemented
+## Tech stack
 
-- React Router application and PWA foundation
-- Signup/signin with JWT authentication
-- PostgreSQL user accounts via Prisma
-- Access-token refresh with HttpOnly refresh cookie
-- Expense Tracker backed by PostgreSQL transactions
-- Expense CRUD and current-month/category visualizations
-- Monthly expense trends derived from transactions
-- PostgreSQL accounts and categories
-- Budget CRUD backed by PostgreSQL
-- Budget adjustment history and one-adjustment business rule
-- Dashboard derived from PostgreSQL transactions and budgets
-- Finance News page and backend proxy
-- Redux state-management foundation
-- Community, Contact, and Finance Assistant foundations
+- **Frontend:** React, React Router, Redux Toolkit, Bootstrap, Recharts
+- **Backend:** Node.js, Express
+- **Database:** PostgreSQL
+- **ORM:** Prisma
+- **Authentication:** JWT access tokens + HttpOnly refresh-token cookies
+- **PWA:** Create React App service worker
+
+## Current features
+
+- User signup, signin, session refresh, logout, and account management
+- Expense tracking with categories, accounts, editing, deletion, and visualizations
+- Income tracking
+- Budget creation, alerts, adjustments, and spending analysis
+- Savings goals and contributions
+- Debt management and debt payments
+- Account and category management
+- Reports and spending insights
+- Finance news integration
+- Dashboard with financial summaries and charts
+- Community, Contact, and Finance Assistant UI foundations
+
+## Security and reliability
+
+The backend currently includes:
+
+- Persistent refresh-session storage with token rotation and revocation
+- User-scoped database access and ownership checks
+- Atomic operations for sensitive financial/authentication workflows
+- Database constraints for key financial invariants
+- Centralized API error handling
+- Request body size limits
+- Authentication and global API rate limiting
+- Input and amount validation
+- Protected transaction, transfer, debt-payment, budget, and savings-goal workflows
 
 ## Database
 
-Prisma schema and migrations live under `finance-tracker-backend/prisma`.
+Prisma schema and migrations are located in `finance-tracker-backend/prisma`.
 
-Core tables:
+Core entities include:
 
-- `users`
-- `accounts`
-- `categories`
-- `transactions`
-- `budgets`
-- `budget_adjustments`
+- Users and refresh sessions
+- Accounts
+- Categories
+- Transactions and transfers
+- Budgets and budget adjustments
+- Savings goals and contributions
+- Debts and debt payments
 
-Money is stored as PostgreSQL `NUMERIC(14,2)`, identifiers are UUIDs, and transaction dates are stored separately from timestamps.
+Financial amounts use PostgreSQL `NUMERIC(14,2)` and identifiers use UUIDs.
 
-## Local setup
+## Local development
 
 ### Backend
 
@@ -67,7 +88,7 @@ npm run prisma:seed
 npm run dev
 ```
 
-Configure `DATABASE_URL`, `ACCESS_TOKEN_SECRET`, `REFRESH_TOKEN_SECRET`, and any required news API key in `.env` using `.env.example` as the template.
+Configure the required environment variables using `.env.example`.
 
 ### Frontend
 
@@ -77,19 +98,38 @@ npm install
 npm start
 ```
 
-## PostgreSQL migration verification
+The frontend expects the backend API URL through `REACT_APP_API_URL`. If it is not set, development defaults to `http://localhost:5000/api`.
 
-After the migration, sign in again so the browser receives a JWT containing the PostgreSQL user UUID. Then verify:
+## Testing
 
-1. Signup/signin
-2. Protected route after refresh
-3. Expense create/edit/delete and persistence
-4. Dashboard updates
-5. Budget create/delete and persistence
-6. Token refresh
-7. `GET /api/health/db`
-8. Backend startup with MongoDB stopped
+Backend tests:
 
-## Future work
+```bash
+cd finance-tracker-backend
+npm test
+```
 
-Income tracking, savings goals, reports and insights, debt management, recurring transactions, richer account management, and production hardening remain separate feature work.
+Frontend tests:
+
+```bash
+cd finance-tracker
+npm test
+```
+
+Build the production frontend with:
+
+```bash
+npm run build
+```
+
+## Project structure
+
+```text
+Personal-Finance-Tracker/
+├── finance-tracker/                 # React frontend
+└── finance-tracker-backend/         # Express API, Prisma and PostgreSQL
+```
+
+## Roadmap
+
+Remaining work is primarily stabilization, testing, UX refinement, and production readiness. New financial features should be added only after the existing workflows are sufficiently tested and stable.
