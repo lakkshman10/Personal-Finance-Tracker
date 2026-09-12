@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../redux/actions';
 import financeApi from '../services/financeApi';
 
 const Account = () => {
+  const dispatch = useDispatch();
   const [account, setAccount] = useState(null);
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', currency: 'INR', timezone: 'Asia/Kolkata' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '' });
@@ -42,8 +45,10 @@ const Account = () => {
     try {
       setSaving(true); setMessage(''); setError('');
       const response = await financeApi.userAccount.update(form);
-      setAccount((current) => ({ ...current, user: response.data.user }));
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      const updatedUser = response.data.user;
+      setAccount((current) => ({ ...current, user: updatedUser }));
+      dispatch(setUser(updatedUser));
+      localStorage.setItem('user', JSON.stringify(updatedUser));
       setMessage(response.data.message || 'Account updated successfully.');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update your account.');
