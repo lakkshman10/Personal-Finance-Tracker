@@ -6,7 +6,7 @@ import NavBar from './components/NavBar';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
-import api, { setAccessToken } from './services/api';
+import api, { refreshAccessToken, setAccessToken } from './services/api';
 import Home from './pages/Home';
 import FinanceAssistant from './pages/FinanceAssistant';
 import News from './pages/News';
@@ -34,10 +34,7 @@ function App() {
 
     const restoreSession = async () => {
       try {
-        const refreshResponse = await api.post('/auth/refresh-token');
-        const accessToken = refreshResponse.data?.accessToken;
-        if (!accessToken) throw new Error('No access token returned.');
-
+        const accessToken = await refreshAccessToken();
         setAccessToken(accessToken);
         dispatch(setToken(accessToken));
 
