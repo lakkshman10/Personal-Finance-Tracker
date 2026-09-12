@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 const validateEnvironment = require('./config/env');
 validateEnvironment();
@@ -30,6 +31,14 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
 };
 
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 600,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { message: 'Too many requests. Please try again later.' },
+});
+
 app.use(cors(corsOptions));
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -41,6 +50,7 @@ app.use((req, res, next) => {
 });
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
+app.use('/api', apiLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/postgres/budgets', postgresBudgetRoutes);
