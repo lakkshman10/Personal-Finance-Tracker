@@ -28,7 +28,7 @@ const generateTokens = (userId, email, sessionId) => ({
 const publicUser = (user) => ({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, currency: user.currency, timezone: user.timezone });
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const revokeAllSessions = async (userId) => prisma.refreshSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } });
+const revokeAllSessions = async (userId, tx = prisma) => tx.refreshSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } });
 
 const createRefreshSession = async (user) => {
   const sessionId = crypto.randomUUID();
@@ -123,8 +123,12 @@ const updateAccount = async (req, res, next) => {
     if (currency !== undefined) { const value = typeof currency === 'string' ? currency.trim().toUpperCase() : ''; if (!/^[A-Z]{3}$/.test(value)) throw new AppError('Currency must be a valid 3-letter code.'); data.currency = value; }
     if (timezone !== undefined) { const value = typeof timezone === 'string' ? timezone.trim() : ''; if (!value || value.length > 64) throw new AppError('Timezone is required and must be at most 64 characters.'); data.timezone = value; }
     if (!Object.keys(data).length) throw new AppError('No account changes were provided.');
-    const user = await prisma.user.update({ where: { id: req.user.id }, data });
-    if (data.email) await revokeAllSessions(req.user.id);
+    const { user, emailChanged } = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({ where: { id: req.user.id }, data });
+      const emailChanged = Boolean(data.email);
+      if (emailChanged) await revokeAllSessions(req.user.id, tx);
+      return { user, emailChanged };
+    });
     return res.status(200).json({ message: 'Account updated successfully.', user: publicUser(user) });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return next(new AppError('That email address is already in use.', 409));
