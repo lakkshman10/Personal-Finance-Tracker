@@ -117,17 +117,41 @@ const getAccount = async (req, res, next) => {
 const updateAccount = async (req, res, next) => {
   try {
     const { firstName, lastName, email, currency, timezone } = req.body || {}; const data = {};
-    if (firstName !== undefined) { const value = String(firstName).trim(); if (!value || value.length > 100) throw new AppError('First name must be between 1 and 100 characters.'); data.firstName = value; }
-    if (lastName !== undefined) { const value = String(lastName).trim(); if (!value || value.length > 100) throw new AppError('Last name must be between 1 and 100 characters.'); data.lastName = value; }
-    if (email !== undefined) { const value = typeof email === 'string' ? email.trim().toLowerCase() : ''; if (!value || !emailRegex.test(value)) throw new AppError('Please enter a valid email address.'); data.email = value; }
-    if (currency !== undefined) { const value = typeof currency === 'string' ? currency.trim().toUpperCase() : ''; if (!/^[A-Z]{3}$/.test(value)) throw new AppError('Currency must be a valid 3-letter code.'); data.currency = value; }
-    if (timezone !== undefined) { const value = typeof timezone === 'string' ? timezone.trim() : ''; if (!value || value.length > 64) throw new AppError('Timezone is required and must be at most 64 characters.'); data.timezone = value; }
+    if (firstName !== undefined) {
+      if (typeof firstName !== 'string') throw new AppError('First name must be a string.');
+      const value = firstName.trim();
+      if (!value || value.length > 100) throw new AppError('First name must be between 1 and 100 characters.');
+      data.firstName = value;
+    }
+    if (lastName !== undefined) {
+      if (typeof lastName !== 'string') throw new AppError('Last name must be a string.');
+      const value = lastName.trim();
+      if (!value || value.length > 100) throw new AppError('Last name must be between 1 and 100 characters.');
+      data.lastName = value;
+    }
+    if (email !== undefined) {
+      if (typeof email !== 'string') throw new AppError('Email must be a string.');
+      const value = email.trim().toLowerCase();
+      if (!value || value.length > 254 || !emailRegex.test(value)) throw new AppError('Please enter a valid email address.');
+      data.email = value;
+    }
+    if (currency !== undefined) {
+      if (typeof currency !== 'string') throw new AppError('Currency must be a string.');
+      const value = currency.trim().toUpperCase();
+      if (!/^[A-Z]{3}$/.test(value)) throw new AppError('Currency must be a valid 3-letter code.');
+      data.currency = value;
+    }
+    if (timezone !== undefined) {
+      if (typeof timezone !== 'string') throw new AppError('Timezone must be a string.');
+      const value = timezone.trim();
+      if (!value || value.length > 64) throw new AppError('Timezone is required and must be at most 64 characters.');
+      data.timezone = value;
+    }
     if (!Object.keys(data).length) throw new AppError('No account changes were provided.');
-    const { user, emailChanged } = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.update({ where: { id: req.user.id }, data });
-      const emailChanged = Boolean(data.email);
-      if (emailChanged) await revokeAllSessions(req.user.id, tx);
-      return { user, emailChanged };
+    const user = await prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({ where: { id: req.user.id }, data });
+      if (data.email) await revokeAllSessions(req.user.id, tx);
+      return updatedUser;
     });
     return res.status(200).json({ message: 'Account updated successfully.', user: publicUser(user) });
   } catch (error) {
@@ -139,8 +163,8 @@ const updateAccount = async (req, res, next) => {
 const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body || {};
-    if (!currentPassword || !newPassword) throw new AppError('Current password and new password are required.');
-    if (!passwordRegex.test(newPassword) || newPassword.length > 128) throw new AppError('New password must be 8 to 128 characters long and contain a number and a special character.');
+    if (typeof currentPassword !== 'string' || typeof newPassword !== 'string' || !currentPassword || !newPassword) throw new AppError('Current password and new password are required.');
+    if (newPassword.length > 128 || !passwordRegex.test(newPassword)) throw new AppError('New password must be 8 to 128 characters long and contain a number and a special character.');
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
     if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) throw new AppError('Current password is incorrect.', 401);
     const passwordHash = await bcrypt.hash(newPassword, 10);
