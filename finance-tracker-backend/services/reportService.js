@@ -21,6 +21,7 @@ const reportsService = {
     const monthMap = new Map(months.map((month) => [month.key, month]));
     const categoryTotals = new Map();
     const currentExpenseCategories = new Map();
+    const expenseByMonthCategory = new Map();
     let totalIncome = 0;
     let totalExpenses = 0;
 
@@ -37,6 +38,10 @@ const reportsService = {
         const categoryName = transaction.category?.name || 'Uncategorized';
         categoryTotals.set(categoryName, (categoryTotals.get(categoryName) || 0) + amount);
         if (transactionMonth === dateKey(now)) currentExpenseCategories.set(categoryName, (currentExpenseCategories.get(categoryName) || 0) + amount);
+
+        const categoryId = transaction.category?.id || 'uncategorized';
+        const key = `${transactionMonth}:${categoryId}`;
+        expenseByMonthCategory.set(key, (expenseByMonthCategory.get(key) || 0) + amount);
       }
     });
     months.forEach((month) => { month.savings = month.income - month.expenses; });
@@ -46,16 +51,17 @@ const reportsService = {
       const key = dateKey(new Date(budget.month));
       if (!budgetByMonth.has(key)) budgetByMonth.set(key, { month: key, budget: 0, spent: 0 });
       budgetByMonth.get(key).budget += Number(budget.amount);
-      const spent = transactions
-        .filter((transaction) => transaction.type === 'EXPENSE' && dateKey(new Date(transaction.transactionDate)) === key && transaction.category?.id === budget.category?.id)
-        .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+      const categoryId = budget.category?.id || 'uncategorized';
+      const spent = expenseByMonthCategory.get(`${key}:${categoryId}`) || 0;
       budgetByMonth.get(key).spent += spent;
     });
     const budgetStatus = Array.from(budgetByMonth.values()).sort((a, b) => a.month.localeCompare(b.month));
 
-    const currentBudgets = budgets.filter((budget) => dateKey(new Date(budget.month)) === dateKey(now));
+    const currentMonthKey = dateKey(now);
+    const currentBudgets = budgets.filter((budget) => dateKey(new Date(budget.month)) === currentMonthKey);
     const budgetPerformance = currentBudgets.map((budget) => {
-      const spent = transactions.filter((transaction) => transaction.type === 'EXPENSE' && new Date(transaction.transactionDate) >= currentMonthStart && new Date(transaction.transactionDate) <= rangeEnd && transaction.category?.id === budget.category?.id).reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+      const categoryId = budget.category?.id || 'uncategorized';
+      const spent = expenseByMonthCategory.get(`${currentMonthKey}:${categoryId}`) || 0;
       const budgetAmount = Number(budget.amount);
       return { category: budget.category?.name || 'Uncategorized', budget: budgetAmount, spent, remaining: budgetAmount - spent, progressPercent: budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0, alertPercent: Number(budget.alertPercent || 80) };
     }).sort((a, b) => b.progressPercent - a.progressPercent);
