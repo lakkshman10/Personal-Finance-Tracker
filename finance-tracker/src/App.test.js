@@ -2,8 +2,17 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+jest.mock('./services/api', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+  },
+  refreshAccessToken: jest.fn(() => new Promise(() => {})),
+  setAccessToken: jest.fn(),
+}));
+
+test('shows a loading state while restoring the session', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+
+  expect(screen.getByText('Loading...')).toBeInTheDocument();
 });
