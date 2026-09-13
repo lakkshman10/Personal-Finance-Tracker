@@ -1,8 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { Provider, useDispatch, useSelector } from 'react-redux';
-import store from './store';
-import { checkAuth } from './store/authSlice';
 import NavBar from './components/NavBar';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
@@ -19,8 +16,8 @@ import SavingsGoals from './pages/SavingsGoals';
 import IncomeTracking from './pages/IncomeTracking';
 import ReportsInsights from './pages/ReportsInsights';
 import Accounts from './pages/Accounts';
-import DebtManagement from './components/debt/DebtManagement';
-import FinanceNews from './pages/FinanceNews';
+import DebtManagement from './pages/DebtManagement';
+import FinanceNews from './pages/News';
 import Community from './pages/Community';
 import ContactUs from './pages/ContactUs';
 import FinanceAssistant from './pages/FinanceAssistant';
@@ -49,42 +46,31 @@ const pageClassMap = {
 
 function MainContent() {
   const location = useLocation();
-  const dispatch = useDispatch();
-  const { isAuthenticated, loading } = useSelector((state) => state.auth);
-
-  useEffect(() => {
-    dispatch(checkAuth());
-  }, [dispatch]);
-
   const showSidebar = routesWithSidebar.includes(location.pathname);
   const pageClass = pageClassMap[location.pathname] || '';
-
-  if (loading) {
-    return <div className="app-loading">Loading...</div>;
-  }
 
   return (
     <div className="App">
       <NavBar />
       <div className={`expensemate-content ${pageClass}`} style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
-        {showSidebar && isAuthenticated && <Sidebar />}
+        {showSidebar && <Sidebar />}
         <main style={{ flex: 1 }}>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/expense-tracker" element={<ProtectedRoute><ExpenseTracker /></ProtectedRoute>} />
-            <Route path="/budgeting" element={<ProtectedRoute><Budgeting /></ProtectedRoute>} />
-            <Route path="/savings-goals" element={<ProtectedRoute><SavingsGoals /></ProtectedRoute>} />
-            <Route path="/income-tracking" element={<ProtectedRoute><IncomeTracking /></ProtectedRoute>} />
-            <Route path="/reports-insights" element={<ProtectedRoute><ReportsInsights /></ProtectedRoute>} />
-            <Route path="/accounts" element={<ProtectedRoute><Accounts /></ProtectedRoute>} />
-            <Route path="/debts" element={<ProtectedRoute><DebtManagement /></ProtectedRoute>} />
-            <Route path="/finance-news" element={<ProtectedRoute><FinanceNews /></ProtectedRoute>} />
-            <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
-            <Route path="/contact-us" element={<ProtectedRoute><ContactUs /></ProtectedRoute>} />
-            <Route path="/finance-assistant" element={<ProtectedRoute><FinanceAssistant /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute element={Dashboard} />} />
+            <Route path="/expense-tracker" element={<ProtectedRoute element={ExpenseTracker} />} />
+            <Route path="/budgeting" element={<ProtectedRoute element={Budgeting} />} />
+            <Route path="/savings-goals" element={<ProtectedRoute element={SavingsGoals} />} />
+            <Route path="/income-tracking" element={<ProtectedRoute element={IncomeTracking} />} />
+            <Route path="/reports-insights" element={<ProtectedRoute element={ReportsInsights} />} />
+            <Route path="/accounts" element={<ProtectedRoute element={Accounts} />} />
+            <Route path="/debts" element={<ProtectedRoute element={DebtManagement} />} />
+            <Route path="/finance-news" element={<ProtectedRoute element={FinanceNews} />} />
+            <Route path="/community" element={<ProtectedRoute element={Community} />} />
+            <Route path="/contact-us" element={<ProtectedRoute element={ContactUs} />} />
+            <Route path="/finance-assistant" element={<ProtectedRoute element={FinanceAssistant} />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
@@ -96,11 +82,9 @@ function MainContent() {
 
 function App() {
   return (
-    <Provider store={store}>
-      <Router>
-        <MainContent />
-      </Router>
-    </Provider>
+    <Router>
+      <MainContent />
+    </Router>
   );
 }
 
