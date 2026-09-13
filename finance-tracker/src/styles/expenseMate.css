@@ -15,170 +15,130 @@
   --em-content-width: 1200px;
 }
 
-.expensemate-content {
-  font-family: var(--em-font);
-  color: var(--em-text);
-}
+.expensemate-content { font-family: var(--em-font); color: var(--em-text); }
+.expensemate-page { width: min(100%, var(--em-content-width)); margin: 0 auto; padding: 30px 24px 50px; box-sizing: border-box; }
+.expensemate-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+.expensemate-page-title { margin: 0; color: var(--em-heading); font-size: 30px; line-height: 1.25; font-weight: 600; letter-spacing: -0.2px; }
+.expensemate-page-subtitle { margin: 6px 0 0; color: var(--em-muted); font-size: 14px; line-height: 1.5; }
+.expensemate-section-title { margin: 0 0 14px; color: var(--em-heading); font-size: 20px; line-height: 1.3; font-weight: 600; }
+.expensemate-panel, .expensemate-stat-card { background: var(--em-surface); border: 1px solid var(--em-border); border-radius: var(--em-radius); box-shadow: var(--em-shadow); }
+.expensemate-panel { padding: 20px; }
+.expensemate-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.expensemate-stat-card { padding: 18px; }
+.expensemate-stat-label { margin: 0 0 6px; color: var(--em-muted); font-size: 13px; font-weight: 500; }
+.expensemate-stat-value { margin: 0; color: var(--em-heading); font-size: 22px; line-height: 1.25; font-weight: 600; }
+.expensemate-btn { border: 0; border-radius: var(--em-radius-sm); padding: 10px 16px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+.expensemate-btn-primary { background: var(--em-primary); color: #fff; }
+.expensemate-btn-primary:hover { background: var(--em-primary-dark); }
+.expensemate-btn-secondary { background: #fff; color: var(--em-text); border: 1px solid var(--em-border); }
+.expensemate-btn-danger { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+.expensemate-btn-small { padding: 6px 10px; font-size: 12px; }
+.expensemate-btn:focus-visible, .expensemate-input:focus-visible, .expensemate-select:focus-visible, .expensemate-textarea:focus-visible { outline: 2px solid rgba(0,168,132,.3); outline-offset: 1px; }
+.expensemate-input, .expensemate-select, .expensemate-textarea { width: 100%; box-sizing: border-box; border: 1px solid #d8dde3; border-radius: var(--em-radius-sm); background: #fff; color: var(--em-text); padding: 10px 12px; font: inherit; font-size: 14px; }
+.expensemate-textarea { min-height: 96px; resize: vertical; }
+.expensemate-field-label { display: block; margin-bottom: 6px; color: var(--em-heading); font-size: 13px; font-weight: 500; }
+.expensemate-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.expensemate-form { display: flex; flex-direction: column; gap: 8px; }
+.expensemate-form-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.expensemate-state-text { color: var(--em-muted); text-align: center; padding: 24px 10px; }
 
-/* Canonical page shell. Existing page-specific layouts can opt in without
-   changing their financial/data logic. */
-.expensemate-page {
-  width: min(100%, var(--em-content-width));
-  margin: 0 auto;
-  padding: 30px 24px 50px;
-  box-sizing: border-box;
-}
+/* Dashboard */
+.dashboard-page { background: var(--em-background); }
+.dashboard-summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dashboard-highlight-card { background: #f0fbf7; border-color: #cceee3; }
+.dashboard-highlight-text { display: block; margin-top: 5px; color: var(--em-primary-dark); font-size: 12px; }
+.dashboard-chart-grid { display: grid; grid-template-columns: 1.15fr .8fr 1.15fr; gap: 16px; margin-bottom: 24px; }
+.dashboard-chart-panel, .dashboard-savings-panel { min-width: 0; }
+.dashboard-savings-details { margin-bottom: 22px; }
+.dashboard-savings-details p { display: flex; justify-content: space-between; gap: 16px; margin: 0 0 12px; color: var(--em-muted); font-size: 14px; }
+.dashboard-savings-details strong { color: var(--em-heading); font-weight: 600; }
+.dashboard-savings-panel .progress { height: 10px; border-radius: 999px; overflow: hidden; background: #e8edf0; }
+.dashboard-progress-caption { margin: 10px 0 0; color: var(--em-muted); font-size: 12px; line-height: 1.45; }
+.dashboard-alerts-panel { margin-bottom: 0; }
+.dashboard-alert { margin-bottom: 10px; }
+.dashboard-alert:last-child { margin-bottom: 0; }
 
-.expensemate-page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 24px;
-}
+/* Expense Tracker legacy layout adapter */
+.app-page-expense-tracker { background: var(--em-background); }
+.app-page-expense-tracker > .expensemate-content { background: transparent; }
+.app-page-expense-tracker > div > div { box-sizing: border-box; }
+.app-page-expense-tracker > div > h1 { color: var(--em-heading) !important; text-align: left !important; font-size: 30px !important; line-height: 1.25 !important; font-weight: 600 !important; margin: 0 0 24px !important; }
+.app-page-expense-tracker > div > div:nth-of-type(1) { display: grid !important; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.7fr) !important; gap: 16px !important; margin-bottom: 24px !important; }
+.app-page-expense-tracker > div > div:nth-of-type(1) > div { margin: 0 !important; max-width: none !important; padding: 20px !important; background: var(--em-surface) !important; border: 1px solid var(--em-border) !important; border-radius: var(--em-radius) !important; box-shadow: var(--em-shadow) !important; }
+.app-page-expense-tracker h2 { color: var(--em-heading) !important; font-size: 20px !important; font-weight: 600 !important; }
+.app-page-expense-tracker form { gap: 8px; }
+.app-page-expense-tracker select, .app-page-expense-tracker input { box-sizing: border-box; width: 100%; padding: 10px 12px !important; border: 1px solid #d8dde3 !important; border-radius: var(--em-radius-sm) !important; background: #fff !important; font: inherit; }
+.app-page-expense-tracker button { border-radius: var(--em-radius-sm) !important; font-family: var(--em-font); }
+.app-page-expense-tracker > div > div:nth-of-type(1) table { width: 100%; border-collapse: collapse; }
+.app-page-expense-tracker > div > div:nth-of-type(1) th { background: #f8fafb !important; color: var(--em-muted) !important; border-bottom: 1px solid var(--em-border) !important; }
+.app-page-expense-tracker > div > div:nth-of-type(1) td, .app-page-expense-tracker > div > div:nth-of-type(1) th { padding: 10px !important; }
+.app-page-expense-tracker > div > div:nth-of-type(2) { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
+.app-page-expense-tracker > div > div:nth-of-type(2) > div { margin: 0 !important; padding: 20px !important; background: var(--em-surface) !important; border: 1px solid var(--em-border) !important; border-radius: var(--em-radius) !important; box-shadow: var(--em-shadow) !important; }
 
-.expensemate-page-title {
-  margin: 0;
-  color: var(--em-heading);
-  font-size: 30px;
-  line-height: 1.25;
-  font-weight: 600;
-  letter-spacing: -0.2px;
-}
+/* Budgeting legacy layout adapter */
+.app-page-budgeting { background: var(--em-background); }
+.app-page-budgeting > div { max-width: var(--em-content-width) !important; width: 100% !important; padding: 30px 24px 50px !important; background: transparent !important; border-radius: 0 !important; box-shadow: none !important; box-sizing: border-box; }
+.app-page-budgeting > div > h1 { text-align: left !important; color: var(--em-heading) !important; font-size: 30px !important; font-weight: 600 !important; margin: 0 0 24px !important; }
+.app-page-budgeting > div > div { gap: 16px !important; margin-bottom: 20px !important; }
+.app-page-budgeting > div > div > div { background: var(--em-surface) !important; background-image: none !important; border: 1px solid var(--em-border) !important; border-radius: var(--em-radius) !important; box-shadow: var(--em-shadow) !important; padding: 20px !important; }
+.app-page-budgeting label { color: var(--em-heading) !important; font-weight: 500 !important; }
+.app-page-budgeting input, .app-page-budgeting select { width: 100% !important; box-sizing: border-box; padding: 10px 12px !important; border: 1px solid #d8dde3 !important; border-radius: var(--em-radius-sm) !important; font: inherit; }
+.app-page-budgeting button { background: var(--em-primary) !important; border-radius: var(--em-radius-sm) !important; font-family: var(--em-font); }
+.app-page-budgeting table { border-collapse: collapse; }
+.app-page-budgeting th { background: #f8fafb !important; color: var(--em-muted) !important; border-bottom: 1px solid var(--em-border) !important; }
+.app-page-budgeting td, .app-page-budgeting th { padding: 11px !important; }
+.app-page-budgeting tr { background: transparent !important; }
 
-.expensemate-page-subtitle {
-  margin: 6px 0 0;
-  color: var(--em-muted);
-  font-size: 14px;
-  line-height: 1.5;
-}
+/* Savings Goals legacy layout adapter */
+.app-page-savings-goals { background: var(--em-background); }
+.app-page-savings-goals > div { max-width: var(--em-content-width) !important; padding: 30px 24px 50px !important; box-sizing: border-box; }
+.app-page-savings-goals > div > h1 { text-align: left !important; color: var(--em-heading) !important; font-size: 30px !important; font-weight: 600 !important; margin: 0 0 24px !important; }
+.app-page-savings-goals > div > div:nth-of-type(2) { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px !important; }
+.app-page-savings-goals > div > div:nth-of-type(2) > div { background: var(--em-surface) !important; border: 1px solid var(--em-border) !important; border-radius: var(--em-radius) !important; box-shadow: var(--em-shadow) !important; }
+.app-page-savings-goals > div > div:nth-of-type(3) { display: grid !important; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.7fr) !important; gap: 16px !important; }
+.app-page-savings-goals > div > div:nth-of-type(3) > div { margin: 0 !important; max-width: none !important; background: var(--em-surface) !important; border: 1px solid var(--em-border) !important; border-radius: var(--em-radius) !important; box-shadow: var(--em-shadow) !important; }
+.app-page-savings-goals input, .app-page-savings-goals textarea { box-sizing: border-box; width: 100% !important; padding: 10px 12px !important; border: 1px solid #d8dde3 !important; border-radius: var(--em-radius-sm) !important; font: inherit; }
+.app-page-savings-goals button { border-radius: var(--em-radius-sm) !important; font-family: var(--em-font); }
+.app-page-savings-goals > div > div:nth-of-type(3) > div:last-child > div { background: #fff !important; border-color: var(--em-border) !important; }
 
-.expensemate-section-title {
-  margin: 0 0 14px;
-  color: var(--em-heading);
-  font-size: 20px;
-  line-height: 1.3;
-  font-weight: 600;
-}
+/* Income Tracking legacy layout adapter */
+.app-page-income-tracking { background: var(--em-background); }
+.app-page-income-tracking > div > h1 { text-align: left !important; color: var(--em-heading) !important; font-size: 30px !important; font-weight: 600 !important; margin: 0 0 24px !important; }
+.app-page-income-tracking > div > div { box-sizing: border-box; }
+.app-page-income-tracking > div > div:nth-of-type(1) { background: var(--em-surface) !important; border: 1px solid var(--em-border) !important; border-radius: var(--em-radius) !important; box-shadow: var(--em-shadow) !important; }
+.app-page-income-tracking > div > div:nth-of-type(2) { display: grid !important; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.7fr) !important; gap: 16px !important; }
+.app-page-income-tracking > div > div:nth-of-type(2) > div { margin: 0 !important; max-width: none !important; background: var(--em-surface) !important; border: 1px solid var(--em-border) !important; border-radius: var(--em-radius) !important; box-shadow: var(--em-shadow) !important; }
+.app-page-income-tracking input, .app-page-income-tracking select { width: 100% !important; box-sizing: border-box; padding: 10px 12px !important; border: 1px solid #d8dde3 !important; border-radius: var(--em-radius-sm) !important; font: inherit; }
+.app-page-income-tracking button { border-radius: var(--em-radius-sm) !important; font-family: var(--em-font); }
+.app-page-income-tracking th { background: #f8fafb !important; color: var(--em-muted) !important; border-bottom: 1px solid var(--em-border) !important; }
+.app-page-income-tracking td, .app-page-income-tracking th { padding: 10px !important; }
 
-.expensemate-panel,
-.expensemate-stat-card {
-  background: var(--em-surface);
-  border: 1px solid var(--em-border);
-  border-radius: var(--em-radius);
-  box-shadow: var(--em-shadow);
-}
+/* Reports & Insights legacy layout adapter */
+.app-page-reports-insights { background: var(--em-background); }
+.app-page-reports-insights > div { max-width: var(--em-content-width) !important; padding: 30px 24px 50px !important; box-sizing: border-box; }
+.app-page-reports-insights h1 { color: var(--em-heading) !important; font-size: 30px !important; font-weight: 600 !important; }
+.app-page-reports-insights > div > div:nth-of-type(1) { margin-bottom: 24px !important; }
+.app-page-reports-insights > div > div:nth-of-type(2) { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 16px !important; }
+.app-page-reports-insights > div > div:nth-of-type(2) > div { background: var(--em-surface) !important; border: 1px solid var(--em-border) !important; border-radius: var(--em-radius) !important; box-shadow: var(--em-shadow) !important; }
+.app-page-reports-insights section { background: var(--em-surface) !important; border: 1px solid var(--em-border) !important; border-radius: var(--em-radius) !important; box-shadow: var(--em-shadow) !important; }
+.app-page-reports-insights section h2 { color: var(--em-heading) !important; }
 
-.expensemate-panel {
-  padding: 20px;
-}
-
-.expensemate-stat-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.expensemate-stat-card {
-  padding: 18px;
-}
-
-.expensemate-stat-label {
-  margin: 0 0 6px;
-  color: var(--em-muted);
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.expensemate-stat-value {
-  margin: 0;
-  color: var(--em-heading);
-  font-size: 22px;
-  line-height: 1.25;
-  font-weight: 600;
-}
-
-.expensemate-btn {
-  border: 0;
-  border-radius: var(--em-radius-sm);
-  padding: 10px 16px;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
-}
-
-.expensemate-btn-primary {
-  background: var(--em-primary);
-  color: #fff;
-}
-
-.expensemate-btn-primary:hover {
-  background: var(--em-primary-dark);
-}
-
-.expensemate-btn:focus-visible,
-.expensemate-input:focus-visible,
-.expensemate-select:focus-visible,
-.expensemate-textarea:focus-visible {
-  outline: 2px solid rgba(0, 168, 132, 0.3);
-  outline-offset: 1px;
-}
-
-.expensemate-input,
-.expensemate-select,
-.expensemate-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #d8dde3;
-  border-radius: var(--em-radius-sm);
-  background: #fff;
-  color: var(--em-text);
-  padding: 10px 12px;
-  font: inherit;
-  font-size: 14px;
-}
-
-.expensemate-textarea {
-  min-height: 96px;
-  resize: vertical;
-}
-
-.expensemate-field-label {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--em-heading);
-  font-size: 13px;
-  font-weight: 500;
-}
+/* Accounts legacy adapter: its existing inline design is already close to the system. */
+.app-page-accounts { background: var(--em-background); }
 
 @media (max-width: 900px) {
-  .expensemate-stat-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .expensemate-stat-grid, .app-page-reports-insights > div > div:nth-of-type(2) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .app-page-expense-tracker > div > div:nth-of-type(1), .app-page-income-tracking > div > div:nth-of-type(2), .app-page-savings-goals > div > div:nth-of-type(3) { grid-template-columns: 1fr !important; }
+  .app-page-savings-goals > div > div:nth-of-type(2) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .app-page-expense-tracker > div > div:nth-of-type(2) { grid-template-columns: 1fr !important; }
 }
 
 @media (max-width: 640px) {
-  .expensemate-page {
-    padding: 22px 16px 36px;
-  }
-
-  .expensemate-page-header {
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .expensemate-page-title {
-    font-size: 26px;
-  }
-
-  .expensemate-stat-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .expensemate-panel {
-    padding: 16px;
-  }
+  .expensemate-page { padding: 22px 16px 36px; }
+  .expensemate-page-header { flex-direction: column; gap: 14px; }
+  .expensemate-page-title { font-size: 26px; }
+  .expensemate-stat-grid, .app-page-reports-insights > div > div:nth-of-type(2), .app-page-savings-goals > div > div:nth-of-type(2) { grid-template-columns: 1fr !important; }
+  .expensemate-panel { padding: 16px; }
+  .app-page-budgeting > div, .app-page-reports-insights > div, .app-page-savings-goals > div { padding: 22px 16px 36px !important; }
+  .app-page-expense-tracker > div > div:nth-of-type(2) { grid-template-columns: 1fr !important; }
 }
